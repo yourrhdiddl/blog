@@ -12,6 +12,8 @@
 <meta property="og:url" content="https://yourrhdiddl.github.io/blog/">
 <meta property="og:image" content="https://yourrhdiddl.github.io/blog/og/default.jpg">
 <meta name="twitter:card" content="summary_large_image">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-MNDDLWDCR9"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date());gtag("config","G-MNDDLWDCR9",{send_page_view:false});</script>
 <style>
 @font-face{font-family:"Pretendard Variable";font-weight:45 920;font-style:normal;font-display:swap;src:url("fonts/PretendardVariable.woff2") format("woff2-variations"),url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");}
 :root{
@@ -205,7 +207,7 @@ textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.8 · 3차: 로그인과 글쓰기(서식·이미지·갤러리·링크 미리보기) (샘플 글 6개는 임의 내용입니다)</div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.9 · 3차: 로그인과 글쓰기(서식·이미지·갤러리·링크 미리보기·방문 통계) (샘플 글 6개는 임의 내용입니다) · 방문 통계는 Google Analytics로 수집합니다</div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
 <script type="module">
@@ -446,6 +448,15 @@ function initEditor(){
 }
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
 function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
+let lastTrack="",authReady=false;
+function track(view,id){
+  if(!authReady||loggedIn||typeof gtag!=="function"||location.hostname!=="yourrhdiddl.github.io")return;
+  if(view!=="home"&&view!=="post")return;
+  const path=view==="post"?"/post/"+id:"/";if(path===lastTrack)return;lastTrack=path;
+  const p=view==="post"?all().find(x=>x.id===id):null;
+  const name=p?new DOMParser().parseFromString(p.t,"text/html").body.textContent:"홈";
+  gtag("event","page_view",{page_location:"https://yourrhdiddl.github.io/blog"+path,page_title:name+" | AIPM 복습 노트"});
+}
 function show(view,id,push){
   delArm=0;
   if((view==="write")&&!loggedIn){after={view,id};view="login";}
@@ -455,6 +466,7 @@ function show(view,id,push){
   else if(view==="write"){$("#page").hidden=false;renderWrite(id);}
   else{view="home";$("#home").hidden=false;renderPicks();renderList();}
   if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
+  track(view,id);
   window.scrollTo(0,0);
 }
 document.addEventListener("click",e=>{
@@ -498,7 +510,7 @@ document.addEventListener("click",async e=>{
 });
 onAuthStateChanged(auth,async u=>{
   user=u;loggedIn=!!u&&(!ADMIN_UID||u.uid===ADMIN_UID);
-  syncAuth();await loadRemote();
+  syncAuth();await loadRemote();authReady=true;
   if(u&&loggedIn&&!$("#page").hidden&&$("#loginForm,#googleBtn")){const n=after;after=null;toast("관리자로 로그인했어요");show(n?n.view:"home",0,true);}
   else if(u&&!loggedIn){toast("관리자 계정이 아니에요");await signOut(auth);}
   else fromHash();
