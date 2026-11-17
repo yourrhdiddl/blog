@@ -310,7 +310,7 @@ function edFocus(){const ed=$("#ed"),cur=getSelection();const inside=cur.rangeCo
 function edCmd(cmd,val){edFocus();document.execCommand("styleWithCSS",false,false);document.execCommand(cmd,false,val);}
 async function edImage(file){
   if(!file||!/^image\//.test(file.type))return toast("이미지 파일만 넣을 수 있어요");
-  try{const url=await resizeImg(file);edFocus();document.execCommand("insertImage",false,url);
+  try{const url=await resizeImg(file);edFocus();getSelection().collapseToEnd();document.execCommand("insertImage",false,url);
     const kb=Math.round($("#ed").innerHTML.length/1024);if(kb>800)toast("이미지가 많아요("+kb+"KB). 1MB가 넘으면 저장이 안 돼요");}
   catch(e){toast("이미지를 불러오지 못했어요");}
 }
