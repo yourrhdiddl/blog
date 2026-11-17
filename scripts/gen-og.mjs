@@ -38,7 +38,11 @@ function placeholderSvg(title, id) {
   if (chars.length > per * 4) lines[3] = lines[3].slice(0, per - 1) + "…";
   const y0 = 400 - (lines.length - 1) * 50;
   const text = lines.map((l, i) => `<text x="90" y="${y0 + i * 100}" font-size="76" font-weight="700" fill="#1f2937">${esc(l)}</text>`).join("");
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset="1" stop-color="${g[1]}"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/><g font-family="Noto Sans CJK KR, Noto Sans KR, sans-serif"><text x="90" y="100" font-size="36" font-weight="700" fill="#374151">${SITE_NAME}</text>${text}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${g[0]}"/><stop offset="1" stop-color="${g[1]}"/></linearGradient></defs><rect width="${W}" height="${H}" fill="url(#g)"/><g font-family="Pretendard, Noto Sans CJK KR, sans-serif"><text x="90" y="100" font-size="36" font-weight="700" fill="#374151">${SITE_NAME}</text>${text}</g></svg>`;
+}
+
+function defaultSvg() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#F7F7F5"/><rect x="0" y="0" width="16" height="${H}" fill="#111827"/><g font-family="Pretendard, Noto Sans CJK KR, sans-serif" fill="#111827"><text x="100" y="150" font-size="34" font-weight="600" fill="#6B7280" letter-spacing="1">AI PM 수업 복습 기록</text><text x="100" y="340" font-size="124" font-weight="800" letter-spacing="-3">${SITE_NAME}</text><rect x="104" y="392" width="120" height="8" rx="4" fill="#111827"/><text x="100" y="500" font-size="36" font-weight="500" fill="#4B5563">수업에서 배운 것을 내 말로 다시 정리합니다</text><text x="100" y="570" font-size="30" font-weight="500" fill="#9CA3AF">yourrhdiddl.github.io/blog</text></g></svg>`;
 }
 
 const DATA_IMG = /^data:image\/(png|jpe?g|webp|gif);base64,([A-Za-z0-9+/=]+)$/;
@@ -84,7 +88,7 @@ const keepP = new Set(), keepO = new Set(["default.jpg"]);
 let changed = 0;
 
 // 사이트 기본 이미지
-const defBuf = await sharp(Buffer.from(placeholderSvg(SITE_NAME + " — AI PM 수업 복습 기록", "default"))).jpeg({ quality: 82 }).toBuffer();
+const defBuf = await sharp(Buffer.from(defaultSvg())).jpeg({ quality: 82 }).toBuffer();
 if (writeIfChanged(path.join(ODIR, "default.jpg"), defBuf)) changed++;
 
 for (const row of raw) {
