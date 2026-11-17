@@ -153,11 +153,18 @@ textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · 디자인 시안 v0.4 (내용은 모두 임의 샘플입니다)</div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.5 · 3차: 로그인과 글쓰기 (샘플 글 6개는 임의 내용입니다)</div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
-<script>
-const posts=[
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+// Firebase 웹 설정값은 화면에 보여도 되는 값입니다. 데이터는 Firestore 보안 규칙이 지킵니다.
+const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
+const auth=getAuth(app),db=getFirestore(app);
+const ADMIN_UID=""; // 관리자 계정의 UID. 처음 로그인한 뒤 채웁니다. 비어 있으면 로그인한 사람 누구나 글쓰기 버튼이 보입니다(저장은 보안 규칙이 막습니다).
+const samples=[
  {id:1,t:"AIPM이란? 첫 수업 핵심 정리",d:"2026.11.03",v:"public",tags:["개념","1주차"],
   s:"AI 프로덕트 매니저가 일반 PM과 다른 점을 세 가지로 정리했습니다.",
   pick:"AI 제품은 '정답'이 아니라 '확률'을 다룬다",
@@ -206,27 +213,39 @@ const posts=[
    ["ul",["<mark class=p>의견</mark>보다 <mark class=m>행동</mark>을 묻는다","\"마지막으로 그 일을 한 게 언제였나요?\"","\"그때 어떻게 해결하셨나요?\""]],
    ["q","복습 포인트: 사람은 미래의 행동을 낙관한다. 과거에 한 일만 믿는다."],
    ["p","다음 실습에서는 질문 5개를 미리 적어 가고, 의견을 묻는 질문은 빼기로 했습니다."]]}
-];
+].map(p=>({...p,id:"s"+p.id,sample:true,key:Date.parse(p.d.replace(/\./g,"-"))}));
+let remote=[],user=null,loadErr="";
 const $=s=>document.querySelector(s);
 let f="all",q="",loggedIn=false;
+const all=()=>samples.filter(p=>p.v==="public"||loggedIn).concat(remote).sort((a,b)=>b.key-a.key);
+const fmt=t=>{const d=new Date(t);return d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
+async function loadRemote(){
+  loadErr="";
+  try{
+    const ref=collection(db,"posts");
+    const snap=await getDocs(loggedIn?ref:query(ref,where("visibility","==","public")));
+    remote=snap.docs.map(x=>{const r=x.data(),ms=r.createdAt?r.createdAt.toMillis():Date.now();
+      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:parse(r.content||""),pick:esc(r.title||"")};});
+  }catch(e){console.error(e);loadErr="글을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";remote=[];}
+}
 const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
 function renderList(){
-  const rows=posts.filter(p=>(f==="all"||p.v===f)&&(!q||(p.t+p.s).includes(q))).slice().sort((a,b)=>b.id-a.id);
+  const rows=all().filter(p=>(f==="all"||p.v===f)&&(!q||(p.t+p.s).includes(q))).slice();
   $("#list").innerHTML=rows.length?rows.map(p=>`<a class="post" href="#/post/${p.id}" data-id="${p.id}">
     <div class="meta">${badge(p)}<time>${p.d}</time></div>
     <h2><span>${p.t}</span></h2><p>${p.s}</p>
     <div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div></a>`).join("")
-   :`<div class="empty">표시할 글이 없어요.</div>`;
+   :`<div class="empty">${loadErr||"표시할 글이 없어요."}</div>`;
 }
 function renderPicks(){
-  $("#picks").innerHTML=[1,3,6].map(id=>posts.find(p=>p.id===id)).map(p=>`<a class="note" href="#/post/${p.id}" data-id="${p.id}">${p.pick}<small>${p.t.slice(0,16)}${p.t.length>16?"…":""}</small></a>`).join("");
+  $("#picks").innerHTML=["s1","s3","s5"].map(id=>samples.find(p=>p.id===id)).map(p=>`<a class="note" href="#/post/${p.id}" data-id="${p.id}">${p.pick}<small>${p.t.slice(0,16)}${p.t.length>16?"…":""}</small></a>`).join("");
 }
 function block(b){const[k,v]=b;
   if(k==="p")return`<p>${v}</p>`;if(k==="h")return`<h3><span>${v}</span></h3>`;
   if(k==="q")return`<blockquote>${v}</blockquote>`;if(k==="pre")return`<pre>${v}</pre>`;
   if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;return"";}
-const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-const strip=s=>s.replace(/<[^>]+>/g,"");
+function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function strip(s){return String(s).replace(/<[^>]+>/g,"");}
 function toText(body){return body.map(([k,v])=>k==="h"?"## "+strip(v):k==="q"?"> "+strip(v):k==="pre"?"```\n"+v+"\n```":k==="ul"?v.map(x=>"- "+strip(x)).join("\n"):strip(v)).join("\n\n");}
 function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b=>{b=b.trim();if(!b)return;
   if(b.startsWith("```"))out.push(["pre",esc(b.replace(/^```\n?/,"").replace(/\n?```$/,""))]);
@@ -236,12 +255,11 @@ function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b
   else out.push(["p",esc(b).replace(/\n/g,"<br>")]);});return out;}
 let delArm=0,after=null;
 function renderDetail(id){
-  const i=posts.findIndex(p=>p.id===id),p=posts[i],pr=posts[i-1],nx=posts[i+1];
+  const L=all(),i=L.findIndex(p=>p.id===id),p=L[i],pr=L[i-1],nx=L[i+1];
   $("#detail").innerHTML=`<button class="back" data-home>← 글 목록</button><article class="article">
    <div class="meta">${badge(p)}<time>${p.d}</time></div>
    <h1><span class="hl">${p.t}</span></h1>
-   ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 시안에서는 열어볼 수 있게 해 두었습니다.</div>`:""}
-   ${loggedIn?`<div class="admin-actions"><button class="btn" data-edit="${p.id}">✏️ 수정</button><button class="btn danger" data-del="${p.id}">🗑 삭제</button></div>`:""}
+   ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
    <div class="body">${p.body.map(block).join("")}</div>
    <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
@@ -249,13 +267,11 @@ function renderDetail(id){
 function renderLogin(){
   $("#page").innerHTML=`<div class="card"><h1>관리자 로그인</h1>
    <p style="color:var(--ink-2);margin-top:6px">글쓰기, 수정, 삭제는 관리자만 할 수 있어요.</p>
-   <div class="sample-note" style="margin-top:16px">시안이라 아무 값이나 입력해도 로그인됩니다. 진짜 로그인은 다음 단계에서 연결합니다.</div>
-   <form id="loginForm"><label>이메일<input name="email" type="email" placeholder="admin@example.com" required></label>
-   <label>비밀번호<input name="pw" type="password" placeholder="비밀번호" required></label>
-   <button class="btn primary" type="submit">로그인</button></form></div>`;
+   <div class="row" style="margin-top:24px"><button class="btn primary" id="googleBtn" type="button">Google 계정으로 로그인</button></div>
+   <p id="loginMsg" style="margin-top:12px;color:var(--ink-3);font-size:.9375rem">비밀번호를 따로 만들지 않고 Google 계정으로 로그인해요.</p></div>`;
 }
 function renderWrite(id){
-  const p=id?posts.find(x=>x.id===id):null;
+  const p=null;
   $("#page").innerHTML=`<button class="back" data-home>← 글 목록</button><div class="card" style="margin-top:8px"><h1>${p?"글 수정":"새 글 쓰기"}</h1>
    <form id="writeForm" data-pid="${p?p.id:""}">
    <label>제목<input name="t" type="text" placeholder="제목을 입력하세요" value="${p?p.t.replace(/"/g,"&quot;"):""}" required></label>
@@ -265,7 +281,7 @@ function renderWrite(id){
    <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p?p.s.replace(/"/g,"&quot;"):""}"></label>
    <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
    <label>내용 <small>빈 줄로 문단 구분 · "## " 소제목 · "- " 목록 · "> " 강조 박스</small><textarea name="c" required>${p?esc(toText(p.body)):""}</textarea></label>
-   <div class="row"><button class="btn primary" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
+   <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
 }
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
 function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
@@ -273,7 +289,7 @@ function show(view,id,push){
   delArm=0;
   if((view==="write")&&!loggedIn){after={view,id};view="login";}
   ["home","detail","page"].forEach(n=>$("#"+n).hidden=true);
-  if(view==="post"&&posts.some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
+  if(view==="post"&&all().some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
   else if(view==="login"){$("#page").hidden=false;renderLogin();}
   else if(view==="write"){$("#page").hidden=false;renderWrite(id);}
   else{view="home";$("#home").hidden=false;renderPicks();renderList();}
@@ -283,29 +299,42 @@ function show(view,id,push){
 document.addEventListener("click",e=>{
   const a=e.target.closest("[data-id],[data-home],[data-go],[data-edit],[data-del]");if(!a)return;
   e.preventDefault();
-  if(a.dataset.del){if(!delArm){delArm=1;a.textContent="정말 삭제할까요? 한 번 더 누르면 삭제";return;}
-    const i=posts.findIndex(p=>p.id===+a.dataset.del);posts.splice(i,1);toast("글을 삭제했어요");show("home",0,true);return;}
-  if(a.dataset.edit)return show("write",+a.dataset.edit,true);
   if(a.dataset.go)return show(a.dataset.go,0,true);
-  show(a.dataset.id?"post":"home",a.dataset.id?+a.dataset.id:0,true);
+  show(a.dataset.id?"post":"home",a.dataset.id||0,true);
 });
-document.addEventListener("submit",e=>{
+document.addEventListener("submit",async e=>{
   e.preventDefault();const fm=e.target,d=new FormData(fm);
-  if(fm.id==="loginForm"){loggedIn=true;syncAuth();toast("관리자로 로그인했어요");const n=after;after=null;return show(n?n.view:"home",n?n.id:0,true);}
-  if(fm.id==="writeForm"){
-    const id=+fm.dataset.pid||0,body=parse(d.get("c")),tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
-    const rec={t:esc(d.get("t").trim()),v:d.get("v"),s:esc(d.get("s").trim()||strip(body[0]?body[0][1]:"").slice(0,60)),tags,body,pick:esc(d.get("t").trim())};
-    if(id){Object.assign(posts.find(p=>p.id===id),rec);toast("수정했어요");show("post",id,true);}
-    else{const nid=Math.max(0,...posts.map(p=>p.id))+1;posts.push({id:nid,d:"2026.11.17",...rec});toast("발행했어요");show("post",nid,true);}
+  if(fm.id!=="writeForm")return;
+  const btn=$("#pubBtn");btn.disabled=true;btn.textContent="저장 중…";
+  const tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
+  const content=d.get("c");
+  const summary=d.get("s").trim()||strip(content).replace(/\s+/g," ").slice(0,60);
+  try{
+    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp()});
+    await loadRemote();toast("발행했어요");show("post",ref.id,true);
+  }catch(err){
+    console.error(err);btn.disabled=false;btn.textContent="발행하기";
+    toast(err.code==="permission-denied"?"관리자만 글을 쓸 수 있어요":"저장하지 못했어요. 다시 시도해 주세요");
   }
 });
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderList();});
 $("#q").oninput=e=>{q=e.target.value.trim();renderList();};
-$("#loginBtn").onclick=()=>{if(loggedIn){loggedIn=false;syncAuth();toast("로그아웃했어요");show("home",0,true);}else show("login",0,true);};
-syncAuth();
-function fromHash(){const m=location.hash.match(/^#\/post\/(\d+)/);if(m)return show("post",+m[1],false);
+$("#loginBtn").onclick=async()=>{if(loggedIn){await signOut(auth);toast("로그아웃했어요");show("home",0,true);}else show("login",0,true);};
+document.addEventListener("click",async e=>{
+  if(e.target.id!=="googleBtn")return;
+  try{await signInWithPopup(auth,new GoogleAuthProvider());}
+  catch(err){console.error(err);const m=$("#loginMsg");if(m){m.textContent="로그인하지 못했어요. 팝업 차단을 풀고 다시 눌러 주세요.";m.style.color="#b42318";}}
+});
+onAuthStateChanged(auth,async u=>{
+  user=u;loggedIn=!!u&&(!ADMIN_UID||u.uid===ADMIN_UID);
+  syncAuth();await loadRemote();
+  if(u&&loggedIn&&!$("#page").hidden&&$("#loginForm,#googleBtn")){const n=after;after=null;toast("관리자로 로그인했어요");show(n?n.view:"home",0,true);}
+  else if(u&&!loggedIn){toast("관리자 계정이 아니에요");await signOut(auth);}
+  else fromHash();
+});
+function fromHash(){const m=location.hash.match(/^#\/post\/([\w-]+)/);if(m)return show("post",m[1],false);
   const w=location.hash.match(/^#\/(login|write)/);show(w?w[1]:"home",0,false);}
-window.addEventListener("hashchange",fromHash);fromHash();
+window.addEventListener("hashchange",fromHash);syncAuth();fromHash();
 </script>
 </body>
 </html>
