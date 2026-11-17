@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AIPM 복습 노트</title>
+<meta name="description" content="AIPM 수업에서 배운 것을 복습하며 정리하는 블로그">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AIPM 복습 노트">
+<meta property="og:title" content="AIPM 복습 노트">
+<meta property="og:description" content="AIPM 수업에서 배운 것을 복습하며 정리하는 블로그">
+<meta property="og:url" content="https://yourrhdiddl.github.io/blog/">
+<meta property="og:image" content="https://yourrhdiddl.github.io/blog/og/default.jpg">
+<meta name="twitter:card" content="summary_large_image">
 <style>
 @font-face{font-family:"Pretendard Variable";font-weight:45 920;font-style:normal;font-display:swap;src:url("fonts/PretendardVariable.woff2") format("woff2-variations"),url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");}
 :root{
@@ -197,7 +205,7 @@ textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.7 · 3차: 로그인과 글쓰기(서식·이미지·갤러리) (샘플 글 6개는 임의 내용입니다)</div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.8 · 3차: 로그인과 글쓰기(서식·이미지·갤러리·링크 미리보기) (샘플 글 6개는 임의 내용입니다)</div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
 <script type="module">
@@ -363,6 +371,7 @@ function renderDetail(id){
    ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
    <div class="body">${p.body.map(block).join("")}</div>
+   ${p.remote&&p.v==="public"?`<div class="row" style="margin-top:20px"><button class="btn" id="shareBtn" data-share="${p.id}" type="button">🔗 공유 링크 복사</button></div>`:""}
    <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
 }
 function renderLogin(){
@@ -473,6 +482,13 @@ document.addEventListener("submit",async e=>{
   }
 });
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderList();});
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("#shareBtn");if(!b)return;
+  const u="https://yourrhdiddl.github.io/blog/p/"+b.dataset.share+".html";
+  try{await navigator.clipboard.writeText(u);}
+  catch(x){const t=document.createElement("textarea");t.value=u;document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(y){}t.remove();}
+  toast("공유 링크를 복사했어요 (미리보기는 최대 15분 뒤 반영)");
+});
 $("#q").oninput=e=>{q=e.target.value.trim();renderList();};
 $("#loginBtn").onclick=async()=>{if(loggedIn){await signOut(auth);toast("로그아웃했어요");show("home",0,true);}else show("login",0,true);};
 document.addEventListener("click",async e=>{
