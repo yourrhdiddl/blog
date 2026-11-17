@@ -3,6 +3,317 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AIPM 복습 노트</title>
+<style>
+@font-face{font-family:"Pretendard Variable";font-weight:45 920;font-style:normal;font-display:swap;src:url("fonts/PretendardVariable.woff2") format("woff2-variations"),url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/woff2/PretendardVariable.woff2") format("woff2-variations");}
+:root{
+  --bg:#fffdf7; --surface:#fff; --ink:#1a1a1a; --ink-2:#444; --ink-3:#6b6b6b; --line:#ece7d9;
+  --brand:#2f5bea; --yellow:#ffe66d; --mint:#b8f0d0; --pink:#ffc9dd; --sky:#c6e2ff;
+  --lock:#92400e; --lock-soft:#fef3c7; --pub:#166534; --pub-soft:#dcfce7;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{font-family:"Pretendard Variable",Pretendard,sans-serif;background:var(--bg);color:var(--ink);
+  font-size:1.0625rem;line-height:1.8;letter-spacing:-0.01em;word-break:keep-all;overflow-wrap:break-word;-webkit-font-smoothing:antialiased;
+  background:#fffdf8 linear-gradient(135deg,rgba(255,236,170,.38) 0%,rgba(255,250,235,0) 38%,rgba(214,226,255,.32) 100%) fixed;min-height:100vh}
+button,input,textarea{font:inherit;letter-spacing:inherit}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px;border-radius:6px}
+.wrap{max-width:760px;margin:0 auto;padding:0 24px}
+
+/* 형광펜 */
+.hl{background:linear-gradient(transparent 52%,var(--yellow) 52%,var(--yellow) 94%,transparent 94%);padding:0 .12em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hl.mint{background-image:linear-gradient(transparent 52%,var(--mint) 52%,var(--mint) 94%,transparent 94%)}
+.hl.pink{background-image:linear-gradient(transparent 52%,var(--pink) 52%,var(--pink) 94%,transparent 94%)}
+.hl.sky{background-image:linear-gradient(transparent 52%,var(--sky) 52%,var(--sky) 94%,transparent 94%)}
+mark{background:none;color:inherit}
+mark.y{background:linear-gradient(transparent 45%,var(--yellow) 45%,var(--yellow) 92%,transparent 92%);padding:0 .1em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.m{background:linear-gradient(transparent 45%,var(--mint) 45%,var(--mint) 92%,transparent 92%);padding:0 .1em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+mark.p{background:linear-gradient(transparent 45%,var(--pink) 45%,var(--pink) 92%,transparent 92%);padding:0 .1em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+
+header{position:sticky;top:0;background:rgba(255,253,248,.88);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:5}
+header .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
+.logo{font-weight:800;font-size:1.25rem;letter-spacing:-0.03em}
+.logo span{background:linear-gradient(transparent 55%,var(--yellow) 55%);padding:0 .1em}
+nav{display:flex;align-items:center;gap:20px;font-weight:500;color:var(--ink-2);font-size:1rem}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:600;cursor:pointer;color:var(--ink)}
+.btn.primary{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn:hover{filter:brightness(.95)}
+
+.hero{padding-top:72px;padding-bottom:40px;position:relative}
+.eyebrow{display:inline-block;font-weight:700;font-size:.9375rem;background:var(--ink);color:#fff;padding:2px 12px;border-radius:999px;margin-bottom:16px;transform:rotate(-1.5deg)}
+.hero h1{font-size:2.625rem;line-height:1.3;font-weight:800;letter-spacing:-0.035em}
+.hero p{margin-top:18px;color:var(--ink-2);font-size:1.1875rem;line-height:1.75;max-width:34em}
+
+.picks{margin-top:0;margin-bottom:8px}
+.pickrow{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.note{padding:16px;border-radius:6px;font-size:1rem;line-height:1.6;font-weight:500;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.06);transition:transform .15s}
+.note:hover{transform:translateY(-3px) rotate(0)!important}
+.note:nth-child(1){background:#fff3a8;transform:rotate(-1deg)}
+.note:nth-child(2){background:#c9f5dc;transform:rotate(1deg)}
+.note:nth-child(3){background:#ffd6e6;transform:rotate(-.6deg)}
+.note small{display:block;margin-top:8px;color:var(--ink-3);font-weight:500;font-size:.8125rem}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:28px 0 16px;border-bottom:2px solid var(--ink)}
+.tabs{display:flex;gap:6px}
+.tab{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid transparent;background:transparent;color:var(--ink-2);font-weight:600;cursor:pointer}
+.tab[aria-selected=true]{background:var(--ink);color:#fff}
+.tab:not([aria-selected=true]):hover{background:#f3eedd}
+.search{min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);width:200px}
+
+.post{display:block;padding:28px 0;border-bottom:1px solid var(--line)}
+.meta{display:flex;align-items:center;gap:10px;font-size:.9375rem;color:var(--ink-3);margin-bottom:8px}
+.badge{display:inline-flex;padding:1px 10px;border-radius:999px;font-size:.8125rem;font-weight:700;line-height:1.6}
+.badge.pub{background:var(--pub-soft);color:var(--pub)}
+.badge.priv{background:var(--lock-soft);color:var(--lock)}
+.post h2{font-size:1.5rem;line-height:1.45;font-weight:700;letter-spacing:-0.025em}
+.post h2 span{background:linear-gradient(transparent 60%,transparent 60%);transition:background .2s}
+.post:hover h2 span{background:linear-gradient(transparent 55%,var(--yellow) 55%,var(--yellow) 94%,transparent 94%)}
+.post p{margin-top:8px;color:var(--ink-2)}
+.tags{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.tags span{font-size:.875rem;color:#3d3d3d;padding:1px 10px;border-radius:6px}
+.tags span:nth-child(3n+1){background:var(--yellow)}.tags span:nth-child(3n+2){background:var(--mint)}.tags span:nth-child(3n){background:var(--pink)}
+.empty{padding:48px 0;color:var(--ink-3);text-align:center}
+
+/* 상세 */
+.back{display:inline-flex;align-items:center;min-height:44px;margin-top:24px;font-weight:600;color:var(--ink-2);cursor:pointer;background:none;border:0}
+.article{padding:16px 0 48px}
+.article h1{font-size:2.125rem;line-height:1.4;font-weight:800;letter-spacing:-0.035em;margin:8px 0 8px}
+.article .lead{color:var(--ink-2);font-size:1.1875rem;margin-bottom:8px}
+.article .body{margin-top:32px;font-size:1.125rem;line-height:1.9}
+.article .body p{margin:0 0 1.4em}
+.article .body h3{font-size:1.5rem;line-height:1.4;font-weight:800;margin:2em 0 .6em;letter-spacing:-0.03em}
+.article .body h3 span{background:linear-gradient(transparent 58%,var(--yellow) 58%,var(--yellow) 94%,transparent 94%);padding:0 .1em}
+.article .body ul{margin:0 0 1.4em 1.3em}.article .body li{margin-bottom:.4em}
+blockquote{margin:0 0 1.6em;padding:16px 20px;background:#fff8d6;border-left:5px solid #f5c400;border-radius:0 8px 8px 0;font-weight:500}
+pre{margin:0 0 1.6em;background:#1f1f24;color:#f3f3f3;padding:16px 20px;border-radius:10px;overflow-x:auto;font:500 .9375rem/1.7 "Pretendard Variable",Pretendard,monospace;white-space:pre}
+.sample-note{margin:8px 0 12px;padding:10px 14px;background:var(--lock-soft);color:var(--lock);border-radius:8px;font-size:.9375rem;font-weight:600}
+.lock{margin:40px 0;padding:32px;border:2px dashed #e2c26b;border-radius:12px;background:var(--lock-soft);text-align:center}
+.lock p{margin:8px 0 16px;color:var(--lock)}
+.pn{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:40px}
+.pn a{padding:16px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-weight:600;line-height:1.5}
+.pn a small{display:block;color:var(--ink-3);font-weight:500;font-size:.8125rem}
+.pn a:hover{border-color:var(--ink)}
+
+.fab{position:fixed;right:24px;bottom:24px;min-height:52px;padding:0 22px;border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+footer{padding:48px 0 64px;color:var(--ink-3);font-size:.9375rem}
+
+.card{margin:40px 0;padding:32px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 4px 24px rgba(60,50,20,.06)}
+.card h1{font-size:1.75rem;font-weight:800;letter-spacing:-0.03em;line-height:1.4}
+form{display:flex;flex-direction:column;gap:18px;margin-top:20px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:.9375rem}
+label small{font-weight:500;color:var(--ink-3)}
+input[type=text],input[type=email],input[type=password],textarea{min-height:48px;padding:10px 14px;border:1px solid #d9d3c0;border-radius:10px;background:#fff;font-weight:500;line-height:1.7}
+textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
+.radios{display:flex;gap:10px}
+.radios label{flex-direction:row;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #d9d3c0;border-radius:999px;background:#fff;cursor:pointer;font-weight:600}
+.radios label:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
+.radios input{accent-color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.admin-actions{display:flex;gap:8px;margin:16px 0 0}
+.btn.danger{color:#b42318;border-color:#f3c4bf}
+.chip{font-size:.8125rem;font-weight:700;background:var(--yellow);padding:2px 10px;border-radius:999px}
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:999px;font-weight:600;z-index:10}
+[hidden]{display:none!important}
+@media (max-width:620px){
+  .hero{padding-top:48px;padding-bottom:28px}.hero h1{font-size:1.9375rem}.hero p{font-size:1.0625rem}
+  .pickrow{grid-template-columns:1fr}nav a.hide-m{display:none}.search{width:100%}
+  .post h2{font-size:1.3125rem}.article h1{font-size:1.75rem}.article .body{font-size:1.0625rem}.pn{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <a class="logo" href="#/" data-home>AIPM <span>복습 노트</span></a>
+  <nav><a class="hide-m" href="#/" data-home>글 목록</a><span class="chip" id="adminChip" hidden>관리자</span><button class="btn" id="loginBtn">관리자 로그인</button></nav>
+</div></header>
+
+<main>
+ <div id="home">
+  <section class="hero wrap">
+    <span class="eyebrow">AI PM 과정 기록</span>
+    <h1>AIPM 수업에서 배운 것을<br><span class="hl">복습</span>하며 정리합니다</h1>
+    <p>수업 때 놓친 부분, <mark class="y">다시 봐야 할 개념</mark>, <mark class="m">실습 메모</mark>, 그리고 <mark class="p">헷갈렸던 포인트</mark>를 한곳에 모았습니다.</p>
+  </section>
+  <section class="wrap picks"><div class="pickrow" id="picks"></div></section>
+  <section class="wrap">
+    <div class="bar">
+      <div class="tabs" role="tablist" aria-label="글 구분">
+        <button class="tab" role="tab" aria-selected="true" data-f="all">전체</button>
+        <button class="tab" role="tab" aria-selected="false" data-f="public">공개</button>
+        <button class="tab" role="tab" aria-selected="false" data-f="private">나만보기</button>
+      </div>
+      <input class="search" id="q" type="search" placeholder="글 검색" aria-label="글 검색">
+    </div>
+    <div id="list"></div>
+  </section>
+ </div>
+
+ <div id="detail" class="wrap" hidden></div>
+ <div id="page" class="wrap" hidden style="max-width:680px"></div>
+</main>
+
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · 디자인 시안 v0.4 (내용은 모두 임의 샘플입니다)</div></footer>
+<button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
+
+<script>
+const posts=[
+ {id:1,t:"AIPM이란? 첫 수업 핵심 정리",d:"2026.11.03",v:"public",tags:["개념","1주차"],
+  s:"AI 프로덕트 매니저가 일반 PM과 다른 점을 세 가지로 정리했습니다.",
+  pick:"AI 제품은 '정답'이 아니라 '확률'을 다룬다",
+  body:[["p","첫 수업에서 가장 인상 깊었던 말은 <mark class=y>\"AI 제품은 항상 맞지 않는다\"</mark>였습니다. 그래서 PM의 일도 달라집니다."],
+   ["h","일반 PM과 다른 점 3가지"],
+   ["ul",["<mark class=y>결과가 매번 달라진다</mark> → 품질을 기준으로 평가해야 한다","<mark class=m>데이터가 제품이다</mark> → 어떤 데이터를 쓰는지가 경쟁력","<mark class=p>실패했을 때의 설계</mark> → 틀렸을 때 사용자가 어떻게 되돌릴 수 있는가"]],
+   ["q","복습 포인트: 기능 목록보다 '틀렸을 때 어떻게 할까'를 먼저 적어본다."],
+   ["p","다음 주 실습 전에 평소 쓰는 AI 서비스 하나를 골라, 틀렸던 순간을 3개 적어 오기로 했습니다."]]},
+ {id:2,t:"프롬프트 기초: 좋은 질문의 4요소",d:"2026.11.05",v:"public",tags:["프롬프트","실습"],
+  s:"역할, 맥락, 요청, 형식. 네 가지만 넣어도 답이 달라집니다.",
+  pick:"역할, 맥락, 요청, 형식을 넣으면 답이 달라진다",
+  body:[["p","수업에서 같은 질문을 <b>두 가지 방식</b>으로 던져 봤습니다. 결과는 확실히 달랐습니다."],
+   ["h","좋은 질문의 4요소"],
+   ["ul",["<mark class=y>역할</mark>: \"너는 10년차 PM이야\"","<mark class=m>맥락</mark>: 누구를 위한 어떤 제품인지","<mark class=p>요청</mark>: 구체적으로 무엇을 원하는지","<mark class=y>형식</mark>: 표, 3줄 요약 등 원하는 모양"]],
+   ["pre","나쁜 예: 앱 아이디어 알려줘\n\n좋은 예: 너는 10년차 PM이야. 대학생을 위한 학습 앱의\n핵심 기능 3개를 표(기능/이유/우선순위)로 정리해줘."],
+   ["q","복습 포인트: 질문이 길어질수록 답이 좋아지는 게 아니라, 빠진 요소가 없을 때 좋아진다."]]},
+ {id:3,t:"PRD 쓰는 법: 한 장으로 끝내기",d:"2026.11.09",v:"public",tags:["PRD","문서화"],
+  s:"길게 쓰기보다 '누구의 어떤 문제를 푸는가'를 먼저 적는 연습.",
+  pick:"PRD의 첫 줄은 기능이 아니라 문제다",
+  body:[["p","PRD(제품 요구사항 문서)는 길수록 좋은 줄 알았는데, 수업에서는 <mark class=y>한 장</mark>으로 시작하라고 했습니다."],
+   ["h","PRD 한 장 구성"],
+   ["ul",["<mark class=y>문제</mark>: 누가, 언제, 무엇이 불편한가","<mark class=m>목표</mark>: 성공하면 무엇이 달라지는가 (숫자로)","<mark class=p>범위</mark>: 이번에 하는 것 / 안 하는 것","<mark class=y>위험</mark>: AI가 틀릴 때의 대응"]],
+   ["q","복습 포인트: '안 하는 것'을 적어야 범위가 지켜진다."],
+   ["p","실습으로 학습 도우미 챗봇의 PRD를 한 장으로 써 보았고, 가장 어려웠던 건 '목표를 숫자로 쓰기'였습니다."]]},
+ {id:4,t:"지표 설계: WAU와 리텐션 헷갈린 부분",d:"2026.11.12",v:"private",tags:["지표","헷갈림"],
+  s:"주간 활성 사용자와 재방문율을 구분해서 다시 정리했습니다.",
+  pick:"WAU는 '몇 명이 왔나', 리텐션은 '다시 왔나'",
+  body:[["p","두 지표를 같은 것처럼 외웠다가 퀴즈에서 틀렸습니다. 그래서 이 글에 <b>내 말로</b> 다시 적어 둡니다."],
+   ["h","한 줄씩 정리"],
+   ["ul",["<mark class=y>WAU</mark>: 일주일 동안 한 번이라도 쓴 사람 수","<mark class=m>리텐션</mark>: 처음 쓴 사람 중 다시 돌아온 비율","<mark class=p>이탈률</mark>: 리텐션의 반대편 숫자"]],
+   ["pre","예시 (샘플 숫자)\n이번 주 가입 100명 → 다음 주 다시 접속 35명\n→ 1주 리텐션 = 35%"],
+   ["q","복습 포인트: 사용자 수가 늘어도 리텐션이 낮으면 '밑 빠진 독'이다."]]},
+ {id:5,t:"에이전틱 코딩 가이드 3가지 문서",d:"2026.11.14",v:"public",tags:["에이전틱코딩","문서화"],
+  s:"시스템 프롬프트, 의사결정 문서, 실패 로그. 세 문서를 왜 따로 둘까.",
+  pick:"AI와 일할 때는 문서가 기억을 대신한다",
+  body:[["p","AI는 어제의 대화를 기억하지 못합니다. 그래서 수업에서 알려준 <mark class=y>세 가지 문서</mark>가 사람과 AI 모두의 기억 장치가 됩니다."],
+   ["h","세 가지 문서"],
+   ["ul",["<mark class=y>개발 지침</mark>: 이 프로젝트의 규칙 (시스템 프롬프트)","<mark class=m>의사결정 문서</mark>: 무엇을, 왜 그렇게 정했는지","<mark class=p>실패 로그</mark>: 안 됐던 일, 원인, 해결 (주제별로 따로)"]],
+   ["q","복습 포인트: 문서는 길 필요가 없다. 3줄이면 AI도 같은 방향으로 일한다."],
+   ["p","비밀번호나 API 키는 문서에 쓰지 않고 <code>.env</code> 파일에 따로 보관합니다."]]},
+ {id:6,t:"사용자 인터뷰 실습 후기",d:"2026.11.16",v:"private",tags:["인터뷰","실습"],
+  s:"질문을 잘못 던져서 원하는 답을 못 얻었던 이유를 기록합니다.",
+  pick:"'좋아하세요?'가 아니라 '마지막으로 언제 썼나요?'",
+  body:[["p","짝 인터뷰 실습에서 저는 \"이 기능 쓰면 좋을 것 같아요?\"라고 물었고, 당연히 \"네\"라는 답만 들었습니다."],
+   ["h","다음에는 이렇게"],
+   ["ul",["<mark class=p>의견</mark>보다 <mark class=m>행동</mark>을 묻는다","\"마지막으로 그 일을 한 게 언제였나요?\"","\"그때 어떻게 해결하셨나요?\""]],
+   ["q","복습 포인트: 사람은 미래의 행동을 낙관한다. 과거에 한 일만 믿는다."],
+   ["p","다음 실습에서는 질문 5개를 미리 적어 가고, 의견을 묻는 질문은 빼기로 했습니다."]]}
+];
+const $=s=>document.querySelector(s);
+let f="all",q="",loggedIn=false;
+const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
+function renderList(){
+  const rows=posts.filter(p=>(f==="all"||p.v===f)&&(!q||(p.t+p.s).includes(q))).slice().sort((a,b)=>b.id-a.id);
+  $("#list").innerHTML=rows.length?rows.map(p=>`<a class="post" href="#/post/${p.id}" data-id="${p.id}">
+    <div class="meta">${badge(p)}<time>${p.d}</time></div>
+    <h2><span>${p.t}</span></h2><p>${p.s}</p>
+    <div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div></a>`).join("")
+   :`<div class="empty">표시할 글이 없어요.</div>`;
+}
+function renderPicks(){
+  $("#picks").innerHTML=[1,3,6].map(id=>posts.find(p=>p.id===id)).map(p=>`<a class="note" href="#/post/${p.id}" data-id="${p.id}">${p.pick}<small>${p.t.slice(0,16)}${p.t.length>16?"…":""}</small></a>`).join("");
+}
+function block(b){const[k,v]=b;
+  if(k==="p")return`<p>${v}</p>`;if(k==="h")return`<h3><span>${v}</span></h3>`;
+  if(k==="q")return`<blockquote>${v}</blockquote>`;if(k==="pre")return`<pre>${v}</pre>`;
+  if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;return"";}
+const esc=s=>s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const strip=s=>s.replace(/<[^>]+>/g,"");
+function toText(body){return body.map(([k,v])=>k==="h"?"## "+strip(v):k==="q"?"> "+strip(v):k==="pre"?"```\n"+v+"\n```":k==="ul"?v.map(x=>"- "+strip(x)).join("\n"):strip(v)).join("\n\n");}
+function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b=>{b=b.trim();if(!b)return;
+  if(b.startsWith("```"))out.push(["pre",esc(b.replace(/^```\n?/,"").replace(/\n?```$/,""))]);
+  else if(b.startsWith("## "))out.push(["h",esc(b.slice(3))]);
+  else if(b.startsWith("> "))out.push(["q",esc(b.slice(2))]);
+  else if(b.split("\n").every(l=>l.startsWith("- ")))out.push(["ul",b.split("\n").map(l=>esc(l.slice(2)))]);
+  else out.push(["p",esc(b).replace(/\n/g,"<br>")]);});return out;}
+let delArm=0,after=null;
+function renderDetail(id){
+  const i=posts.findIndex(p=>p.id===id),p=posts[i],pr=posts[i-1],nx=posts[i+1];
+  $("#detail").innerHTML=`<button class="back" data-home>← 글 목록</button><article class="article">
+   <div class="meta">${badge(p)}<time>${p.d}</time></div>
+   <h1><span class="hl">${p.t}</span></h1>
+   ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 시안에서는 열어볼 수 있게 해 두었습니다.</div>`:""}
+   ${loggedIn?`<div class="admin-actions"><button class="btn" data-edit="${p.id}">✏️ 수정</button><button class="btn danger" data-del="${p.id}">🗑 삭제</button></div>`:""}
+   <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
+   <div class="body">${p.body.map(block).join("")}</div>
+   <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
+}
+function renderLogin(){
+  $("#page").innerHTML=`<div class="card"><h1>관리자 로그인</h1>
+   <p style="color:var(--ink-2);margin-top:6px">글쓰기, 수정, 삭제는 관리자만 할 수 있어요.</p>
+   <div class="sample-note" style="margin-top:16px">시안이라 아무 값이나 입력해도 로그인됩니다. 진짜 로그인은 다음 단계에서 연결합니다.</div>
+   <form id="loginForm"><label>이메일<input name="email" type="email" placeholder="admin@example.com" required></label>
+   <label>비밀번호<input name="pw" type="password" placeholder="비밀번호" required></label>
+   <button class="btn primary" type="submit">로그인</button></form></div>`;
+}
+function renderWrite(id){
+  const p=id?posts.find(x=>x.id===id):null;
+  $("#page").innerHTML=`<button class="back" data-home>← 글 목록</button><div class="card" style="margin-top:8px"><h1>${p?"글 수정":"새 글 쓰기"}</h1>
+   <form id="writeForm" data-pid="${p?p.id:""}">
+   <label>제목<input name="t" type="text" placeholder="제목을 입력하세요" value="${p?p.t.replace(/"/g,"&quot;"):""}" required></label>
+   <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">공개 설정</div><div class="radios">
+     <label><input type="radio" name="v" value="public" ${!p||p.v==="public"?"checked":""}> 공개</label>
+     <label><input type="radio" name="v" value="private" ${p&&p.v==="private"?"checked":""}> 🔒 나만보기</label></div></div>
+   <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p?p.s.replace(/"/g,"&quot;"):""}"></label>
+   <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
+   <label>내용 <small>빈 줄로 문단 구분 · "## " 소제목 · "- " 목록 · "> " 강조 박스</small><textarea name="c" required>${p?esc(toText(p.body)):""}</textarea></label>
+   <div class="row"><button class="btn primary" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
+}
+function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
+function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
+function show(view,id,push){
+  delArm=0;
+  if((view==="write")&&!loggedIn){after={view,id};view="login";}
+  ["home","detail","page"].forEach(n=>$("#"+n).hidden=true);
+  if(view==="post"&&posts.some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
+  else if(view==="login"){$("#page").hidden=false;renderLogin();}
+  else if(view==="write"){$("#page").hidden=false;renderWrite(id);}
+  else{view="home";$("#home").hidden=false;renderPicks();renderList();}
+  if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
+  window.scrollTo(0,0);
+}
+document.addEventListener("click",e=>{
+  const a=e.target.closest("[data-id],[data-home],[data-go],[data-edit],[data-del]");if(!a)return;
+  e.preventDefault();
+  if(a.dataset.del){if(!delArm){delArm=1;a.textContent="정말 삭제할까요? 한 번 더 누르면 삭제";return;}
+    const i=posts.findIndex(p=>p.id===+a.dataset.del);posts.splice(i,1);toast("글을 삭제했어요");show("home",0,true);return;}
+  if(a.dataset.edit)return show("write",+a.dataset.edit,true);
+  if(a.dataset.go)return show(a.dataset.go,0,true);
+  show(a.dataset.id?"post":"home",a.dataset.id?+a.dataset.id:0,true);
+});
+document.addEventListener("submit",e=>{
+  e.preventDefault();const fm=e.target,d=new FormData(fm);
+  if(fm.id==="loginForm"){loggedIn=true;syncAuth();toast("관리자로 로그인했어요");const n=after;after=null;return show(n?n.view:"home",n?n.id:0,true);}
+  if(fm.id==="writeForm"){
+    const id=+fm.dataset.pid||0,body=parse(d.get("c")),tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
+    const rec={t:esc(d.get("t").trim()),v:d.get("v"),s:esc(d.get("s").trim()||strip(body[0]?body[0][1]:"").slice(0,60)),tags,body,pick:esc(d.get("t").trim())};
+    if(id){Object.assign(posts.find(p=>p.id===id),rec);toast("수정했어요");show("post",id,true);}
+    else{const nid=Math.max(0,...posts.map(p=>p.id))+1;posts.push({id:nid,d:"2026.11.17",...rec});toast("발행했어요");show("post",nid,true);}
+  }
+});
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderList();});
+$("#q").oninput=e=>{q=e.target.value.trim();renderList();};
+$("#loginBtn").onclick=()=>{if(loggedIn){loggedIn=false;syncAuth();toast("로그아웃했어요");show("home",0,true);}else show("login",0,true);};
+syncAuth();
+function fromHash(){const m=location.hash.match(/^#\/post\/(\d+)/);if(m)return show("post",+m[1],false);
+  const w=location.hash.match(/^#\/(login|write)/);show(w?w[1]:"home",0,false);}
+window.addEventListener("hashchange",fromHash);fromHash();
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>내 블로그 · 첫 화면 디자인 초안 v0.1</title>
 <style>
 @font-face{font-family:"Pretendard Variable";font-weight:45 920;font-style:normal;font-display:swap;src:url("fonts/PretendardVariable.woff2") format("woff2-variations");}
