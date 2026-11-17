@@ -105,6 +105,29 @@ label{display:flex;flex-direction:column;gap:6px;font-weight:700;font-size:.9375
 label small{font-weight:500;color:var(--ink-3)}
 input[type=text],input[type=email],input[type=password],textarea{min-height:48px;padding:10px 14px;border:1px solid #d9d3c0;border-radius:10px;background:#fff;font-weight:500;line-height:1.7}
 textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
+
+/* 글쓰기 편집기 */
+.tb{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;border:1px solid #d9d3c0;border-bottom:0;border-radius:10px 10px 0 0;background:#faf6e8}
+.tb .tbb{min-width:40px;min-height:40px;padding:0 10px;border:1px solid transparent;border-radius:8px;background:transparent;cursor:pointer;font-weight:700;color:var(--ink)}
+.tb .tbb:hover{background:#fff;border-color:#d9d3c0}
+.tb select{min-height:40px;border:1px solid #d9d3c0;border-radius:8px;background:#fff;padding:0 8px;font-weight:600}
+.tb .sep{width:1px;height:24px;background:#d9d3c0;margin:0 4px}
+.tb .sw{width:26px;min-width:26px;height:26px;min-height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #c9c2ac;padding:0;cursor:pointer}
+.ed{min-height:340px;padding:14px 16px;border:1px solid #d9d3c0;border-radius:0 0 10px 10px;background:#fff;line-height:1.8;font-weight:500;outline:none}
+.ed:focus{border-color:var(--brand)}
+.ed:empty:before{content:attr(data-ph);color:#9a947f}
+.ed img,.article .body img{max-width:100%;height:auto;border-radius:10px;display:block;margin:12px 0}
+.ed h3,.article .body h3{font-size:1.5rem;line-height:1.4;font-weight:800;margin:1.2em 0 .5em}
+.ed blockquote,.article .body blockquote{margin:1em 0}
+.ed ul,.ed ol,.article .body ol{margin:0 0 1em 1.3em}
+.ed p,.ed div{margin:0 0 1em}
+.article .body font[size="2"],.ed font[size="2"]{font-size:.85em}
+.article .body font[size="5"],.ed font[size="5"]{font-size:1.35em}
+.article .body font[size="6"],.ed font[size="6"]{font-size:1.8em}
+.article .body font[size="1"],.ed font[size="1"]{font-size:.75em}
+.article .body font[size="4"],.ed font[size="4"]{font-size:1.2em}
+.article .body font[size="7"],.ed font[size="7"]{font-size:2.4em}
+.edhint{font-size:.875rem;color:#6b6552;font-weight:500}
 .radios{display:flex;gap:10px}
 .radios label{flex-direction:row;align-items:center;gap:8px;min-height:44px;padding:0 16px;border:1px solid #d9d3c0;border-radius:999px;background:#fff;cursor:pointer;font-weight:600}
 .radios label:has(input:checked){background:var(--ink);color:#fff;border-color:var(--ink)}
@@ -153,7 +176,7 @@ textarea{min-height:320px;resize:vertical;font-size:1.0625rem}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.5 · 3차: 로그인과 글쓰기 (샘플 글 6개는 임의 내용입니다)</div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.6 · 3차: 로그인과 글쓰기(서식·이미지) (샘플 글 6개는 임의 내용입니다)</div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
 <script type="module">
@@ -225,7 +248,7 @@ async function loadRemote(){
     const ref=collection(db,"posts");
     const snap=await getDocs(loggedIn?ref:query(ref,where("visibility","==","public")));
     remote=snap.docs.map(x=>{const r=x.data(),ms=r.createdAt?r.createdAt.toMillis():Date.now();
-      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:parse(r.content||""),pick:esc(r.title||"")};});
+      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:r.contentFormat==="html"?[["html",clean(r.content||"")]]:parse(r.content||""),pick:esc(r.title||"")};});
   }catch(e){console.error(e);loadErr="글을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";remote=[];}
 }
 const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
@@ -243,8 +266,54 @@ function renderPicks(){
 function block(b){const[k,v]=b;
   if(k==="p")return`<p>${v}</p>`;if(k==="h")return`<h3><span>${v}</span></h3>`;
   if(k==="q")return`<blockquote>${v}</blockquote>`;if(k==="pre")return`<pre>${v}</pre>`;
-  if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;return"";}
+  if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;if(k==="html")return v;return"";}
 function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+
+const OKT={P:1,DIV:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,FONT:1,IMG:1,A:1};
+const BADT=/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META|SVG|MATH|FORM|INPUT|TEXTAREA|BUTTON|SELECT|TEMPLATE|NOSCRIPT)$/;
+function clean(h){
+  const doc=new DOMParser().parseFromString("<body>"+h,"text/html");
+  (function walk(n){[...n.childNodes].forEach(c=>{
+    if(c.nodeType===3)return;
+    if(c.nodeType!==1){c.remove();return;}
+    const t=c.tagName;
+    if(BADT.test(t)){c.remove();return;}
+    walk(c);
+    if(!OKT[t]){c.replaceWith(...c.childNodes);return;}
+    const keep={};
+    if(t==="FONT"){const col=c.getAttribute("color"),sz=c.getAttribute("size");
+      if(col&&/^(#[0-9a-f]{3,8}|rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\))$/i.test(col))keep.color=col;
+      if(sz&&/^[1-7]$/.test(sz))keep.size=sz;}
+    if(t==="IMG"){const src=c.getAttribute("src")||"";
+      if(!/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/.test(src)){c.remove();return;}
+      keep.src=src;keep.alt=(c.getAttribute("alt")||"").slice(0,200);keep.loading="lazy";}
+    if(t==="A"){const href=c.getAttribute("href")||"";
+      if(!/^https?:\/\//i.test(href)){c.replaceWith(...c.childNodes);return;}
+      keep.href=href;keep.target="_blank";keep.rel="noopener noreferrer";}
+    [...c.attributes].forEach(a=>c.removeAttribute(a.name));
+    Object.entries(keep).forEach(([k,v])=>c.setAttribute(k,v));
+  });})(doc.body);
+  return doc.body.innerHTML;
+}
+function resizeImg(file,max=900){return new Promise((ok,no)=>{
+  const u=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const r=Math.min(1,max/im.width),cv=document.createElement("canvas");
+    cv.width=Math.round(im.width*r);cv.height=Math.round(im.height*r);
+    const g=cv.getContext("2d");g.fillStyle="#fff";g.fillRect(0,0,cv.width,cv.height);g.drawImage(im,0,0,cv.width,cv.height);
+    URL.revokeObjectURL(u);ok(cv.toDataURL("image/jpeg",0.8));};
+  im.onerror=()=>{URL.revokeObjectURL(u);no(new Error("img"));};im.src=u;});}
+let savedRange=null;
+document.addEventListener("selectionchange",()=>{const ed=document.getElementById("ed"),s=getSelection();
+  if(ed&&s.rangeCount&&ed.contains(s.anchorNode))savedRange=s.getRangeAt(0).cloneRange();});
+function edFocus(){const ed=$("#ed"),cur=getSelection();const inside=cur.rangeCount&&ed.contains(cur.anchorNode)&&ed.contains(cur.focusNode);ed.focus();if(inside){}else if(savedRange){const s=getSelection();s.removeAllRanges();s.addRange(savedRange);}
+  else{const r=document.createRange();r.selectNodeContents(ed);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);}}
+function edCmd(cmd,val){edFocus();document.execCommand("styleWithCSS",false,false);document.execCommand(cmd,false,val);}
+async function edImage(file){
+  if(!file||!/^image\//.test(file.type))return toast("이미지 파일만 넣을 수 있어요");
+  try{const url=await resizeImg(file);edFocus();document.execCommand("insertImage",false,url);
+    const kb=Math.round($("#ed").innerHTML.length/1024);if(kb>800)toast("이미지가 많아요("+kb+"KB). 1MB가 넘으면 저장이 안 돼요");}
+  catch(e){toast("이미지를 불러오지 못했어요");}
+}
 function strip(s){return String(s).replace(/<[^>]+>/g,"");}
 function toText(body){return body.map(([k,v])=>k==="h"?"## "+strip(v):k==="q"?"> "+strip(v):k==="pre"?"```\n"+v+"\n```":k==="ul"?v.map(x=>"- "+strip(x)).join("\n"):strip(v)).join("\n\n");}
 function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b=>{b=b.trim();if(!b)return;
@@ -280,8 +349,50 @@ function renderWrite(id){
      <label><input type="radio" name="v" value="private" ${p&&p.v==="private"?"checked":""}> 🔒 나만보기</label></div></div>
    <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p?p.s.replace(/"/g,"&quot;"):""}"></label>
    <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
-   <label>내용 <small>빈 줄로 문단 구분 · "## " 소제목 · "- " 목록 · "> " 강조 박스</small><textarea name="c" required>${p?esc(toText(p.body)):""}</textarea></label>
+   <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">내용</div>
+    <div class="tb" role="toolbar" aria-label="글 서식">
+     <button type="button" class="tbb" data-cmd="bold" title="굵게" aria-label="굵게"><b>B</b></button>
+     <button type="button" class="tbb" data-cmd="italic" title="기울임" aria-label="기울임"><i>I</i></button>
+     <button type="button" class="tbb" data-cmd="underline" title="밑줄" aria-label="밑줄"><u>U</u></button>
+     <button type="button" class="tbb" data-cmd="strikeThrough" title="취소선" aria-label="취소선"><s>S</s></button>
+     <span class="sep"></span>
+     <select id="szSel" aria-label="글씨 크기"><option value="">글씨 크기</option><option value="2">작게</option><option value="3">보통</option><option value="5">크게</option><option value="6">아주 크게</option></select>
+     <span class="sep"></span>
+     <button type="button" class="tbb sw" data-color="#1b1b1b" style="background:#1b1b1b" title="검정" aria-label="글자색 검정"></button>
+     <button type="button" class="tbb sw" data-color="#d93025" style="background:#d93025" title="빨강" aria-label="글자색 빨강"></button>
+     <button type="button" class="tbb sw" data-color="#e8710a" style="background:#e8710a" title="주황" aria-label="글자색 주황"></button>
+     <button type="button" class="tbb sw" data-color="#188038" style="background:#188038" title="초록" aria-label="글자색 초록"></button>
+     <button type="button" class="tbb sw" data-color="#1a73e8" style="background:#1a73e8" title="파랑" aria-label="글자색 파랑"></button>
+     <button type="button" class="tbb sw" data-color="#7b3fe4" style="background:#7b3fe4" title="보라" aria-label="글자색 보라"></button>
+     <button type="button" class="tbb sw" data-color="#7a7a7a" style="background:#7a7a7a" title="회색" aria-label="글자색 회색"></button>
+     <span class="sep"></span>
+     <button type="button" class="tbb" data-cmd="formatBlock" data-val="<h3>" title="소제목">소제목</button>
+     <button type="button" class="tbb" data-cmd="formatBlock" data-val="<blockquote>" title="인용">인용</button>
+     <button type="button" class="tbb" data-cmd="insertUnorderedList" title="목록">• 목록</button>
+     <button type="button" class="tbb" data-cmd="removeFormat" title="서식 지우기">서식 지움</button>
+     <span class="sep"></span>
+     <button type="button" class="tbb" id="imgBtn" title="이미지 넣기">🖼 이미지</button>
+     <input type="file" id="imgFile" accept="image/*" hidden>
+    </div>
+    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 이미지는 끌어다 놓거나 붙여넣어도 돼요."></div>
+    <div class="edhint" style="margin-top:6px">이미지는 가로 900px로 줄여서 글에 함께 저장돼요. 글 한 편은 합쳐서 약 1MB까지예요.</div></div>
    <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
+  initEditor();
+}
+
+function initEditor(){
+  const ed=$("#ed");savedRange=null;if(!ed)return;
+  document.execCommand("defaultParagraphSeparator",false,"p");
+  document.querySelectorAll(".tb [data-cmd],.tb [data-color],#imgBtn").forEach(b=>b.addEventListener("mousedown",e=>e.preventDefault()));
+  document.querySelectorAll(".tb [data-cmd]").forEach(b=>b.onclick=()=>edCmd(b.dataset.cmd,b.dataset.val));
+  document.querySelectorAll(".tb [data-color]").forEach(b=>b.onclick=()=>edCmd("foreColor",b.dataset.color));
+  $("#szSel").onchange=e=>{if(e.target.value)edCmd("fontSize",e.target.value);e.target.value="";};
+  $("#imgBtn").onclick=()=>$("#imgFile").click();
+  $("#imgFile").onchange=e=>{[...e.target.files].forEach(edImage);e.target.value="";};
+  ed.addEventListener("paste",e=>{e.preventDefault();const fs=[...(e.clipboardData?.files||[])].filter(f=>/^image\//.test(f.type));
+    if(fs.length)fs.forEach(edImage);else{const t=e.clipboardData?.getData("text/plain")||"";if(t)document.execCommand("insertText",false,t);}});
+  ed.addEventListener("drop",e=>{const fs=[...(e.dataTransfer?.files||[])].filter(f=>/^image\//.test(f.type));
+    if(fs.length){e.preventDefault();fs.forEach(edImage);}});
 }
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
 function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
@@ -307,10 +418,13 @@ document.addEventListener("submit",async e=>{
   if(fm.id!=="writeForm")return;
   const btn=$("#pubBtn");btn.disabled=true;btn.textContent="저장 중…";
   const tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
-  const content=d.get("c");
-  const summary=d.get("s").trim()||strip(content).replace(/\s+/g," ").slice(0,60);
+  const content=clean($("#ed").innerHTML).trim();
+  const plain=strip(content).replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
+  if(!plain&&!/<img /.test(content)){btn.disabled=false;btn.textContent="발행하기";return toast("내용을 입력해 주세요");}
+  if(new Blob([content]).size>950000){btn.disabled=false;btn.textContent="발행하기";return toast("글이 너무 커요. 이미지를 줄여 주세요");}
+  const summary=d.get("s").trim()||plain.slice(0,60);
   try{
-    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp()});
+    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp()});
     await loadRemote();toast("발행했어요");show("post",ref.id,true);
   }catch(err){
     console.error(err);btn.disabled=false;btn.textContent="발행하기";
