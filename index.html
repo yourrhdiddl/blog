@@ -163,7 +163,7 @@ import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestam
 // Firebase 웹 설정값은 화면에 보여도 되는 값입니다. 데이터는 Firestore 보안 규칙이 지킵니다.
 const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
 const auth=getAuth(app),db=getFirestore(app);
-const ADMIN_UID=""; // 관리자 계정의 UID. 처음 로그인한 뒤 채웁니다. 비어 있으면 로그인한 사람 누구나 글쓰기 버튼이 보입니다(저장은 보안 규칙이 막습니다).
+const ADMIN_UID="SVoqSkelN5VPVrv5vnKRwTGVK4K2"; // 관리자 계정의 UID. 처음 로그인한 뒤 채웁니다. 비어 있으면 로그인한 사람 누구나 글쓰기 버튼이 보입니다(저장은 보안 규칙이 막습니다).
 const samples=[
  {id:1,t:"AIPM이란? 첫 수업 핵심 정리",d:"2026.11.03",v:"public",tags:["개념","1주차"],
   s:"AI 프로덕트 매니저가 일반 PM과 다른 점을 세 가지로 정리했습니다.",
