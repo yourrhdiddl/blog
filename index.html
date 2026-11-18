@@ -372,7 +372,7 @@ function renderDetail(id){
    <h1><span class="hl">${p.t}</span></h1>
    ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
-   <div class="body">${p.body.map(block).join("")}</div>
+   <div class="body">${p.body.map(block).join("")}</div><div id="readEnd" style="height:1px"></div>
    ${p.remote&&p.v==="public"?`<div class="row" style="margin-top:20px"><button class="btn" id="shareBtn" data-share="${p.id}" type="button">🔗 공유 링크 복사</button></div>`:""}
    <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
 }
@@ -458,6 +458,31 @@ function track(view,id){
   window["ga-disable-G-MNDDLWDCR9"]=false;
   gtag("event","page_view",{page_location:"https://yourrhdiddl.github.io/blog"+path,page_title:name+" | AIPM 복습 노트"});
 }
+const RD={sent:new Set(),cur:null};
+function gaOk(){return authReady&&!loggedIn&&typeof gtag==="function"&&location.hostname==="yourrhdiddl.github.io";}
+function gaEv(name,id,extra){
+  if(!gaOk())return;
+  const p=all().find(x=>x.id===id);
+  const t=p?new DOMParser().parseFromString(p.t,"text/html").body.textContent:"";
+  window["ga-disable-G-MNDDLWDCR9"]=false;
+  gtag("event",name,Object.assign({page_location:"https://yourrhdiddl.github.io/blog/post/"+id,page_title:t+" | AIPM 복습 노트",item_id:id},extra||{}));
+}
+function stopRead(){const c=RD.cur;if(!c)return;clearInterval(c.timer);if(c.io)c.io.disconnect();window.removeEventListener("scroll",c.onScroll);RD.cur=null;}
+function startRead(view,id){
+  stopRead();
+  if(view!=="post"||!gaOk())return;
+  const body=document.querySelector("#detail .body"),end=document.getElementById("readEnd");
+  if(!body||!end)return;
+  const chars=body.textContent.replace(/\s/g,"").length;
+  const c=RD.cur={ms:0,reached:false,need:Math.max(10000,chars/500*60000*0.5)};
+  const once=(name,extra)=>{const k=name+":"+id+":"+(extra&&extra.percent||"");if(RD.sent.has(k))return;RD.sent.add(k);gaEv(name,id,extra);};
+  const check=()=>{if(c.reached&&c.ms>=c.need)once("read_end",{engaged_sec:Math.round(c.ms/1000)});};
+  c.timer=setInterval(()=>{if(document.visibilityState==="visible"){c.ms+=1000;check();}},1000);
+  c.io=new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting)){c.reached=true;once("read_reach");check();}});c.io.observe(end);
+  let raf=0;
+  c.onScroll=()=>{if(raf)return;raf=requestAnimationFrame(()=>{raf=0;const r=body.getBoundingClientRect(),ratio=(innerHeight-r.top)/(r.height||1);[25,50,75].forEach(n=>{if(ratio>=n/100)once("read_progress",{percent:n});});});};
+  window.addEventListener("scroll",c.onScroll,{passive:true});c.onScroll();
+}
 function show(view,id,push){
   delArm=0;
   if((view==="write")&&!loggedIn){after={view,id};view="login";}
@@ -469,6 +494,7 @@ function show(view,id,push){
   if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
   track(view,id);
   window.scrollTo(0,0);
+  startRead(view,id);
 }
 document.addEventListener("click",e=>{
   const a=e.target.closest("[data-id],[data-home],[data-go],[data-edit],[data-del]");if(!a)return;
@@ -500,6 +526,7 @@ document.addEventListener("click",async e=>{
   const u="https://yourrhdiddl.github.io/blog/p/"+b.dataset.share+".html";
   try{await navigator.clipboard.writeText(u);}
   catch(x){const t=document.createElement("textarea");t.value=u;document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(y){}t.remove();}
+  gaEv("share",b.dataset.share,{method:"copy_link",content_type:"post"});
   toast("공유 링크를 복사했어요 (미리보기는 최대 15분 뒤 반영)");
 });
 $("#q").oninput=e=>{q=e.target.value.trim();renderList();};
