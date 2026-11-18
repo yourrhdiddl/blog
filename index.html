@@ -284,6 +284,35 @@ input[type=text],input[type=email],input[type=password],textarea,.ed,.tb select{
   body::before,body::after,main::before{display:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ===== v1.3 저채도 + 날짜 카드 ===== */
+:root{--yellow:#efe3b0;--mint:#cfe6d9;--pink:#ecd3dc;--sky:#d3e0ee;--brand:#4a63b8;--g-blur:blur(18px) saturate(115%);
+  --g-bg:rgba(255,255,255,.46);--g-sh:0 8px 32px rgba(70,75,110,.12),inset 0 1px 0 rgba(255,255,255,.85)}
+body{background:#f1f2f6}
+body::before{opacity:.55;background:radial-gradient(circle,#e7d9cc 0%,#e6d3d9 55%,transparent 72%)}
+body::after{opacity:.55;background:radial-gradient(circle,#bcc8da 0%,#c6c2dc 50%,transparent 72%)}
+main::before{opacity:.4;background:radial-gradient(circle,#c9ddd2 0%,transparent 70%)}
+.note:nth-child(1){background:linear-gradient(135deg,rgba(239,227,176,.6),rgba(255,255,255,.42))}
+.note:nth-child(2){background:linear-gradient(135deg,rgba(207,230,217,.6),rgba(255,255,255,.42))}
+.note:nth-child(3){background:linear-gradient(135deg,rgba(236,211,220,.6),rgba(255,255,255,.42))}
+.thumb.c0{background:linear-gradient(135deg,#efe6c4,#ead7de)}
+.thumb.c1{background:linear-gradient(135deg,#d6e6dc,#d5e0ec)}
+.thumb.c2{background:linear-gradient(135deg,#ead7de,#efe6c4)}
+.thumb.c3{background:linear-gradient(135deg,#d5e0ec,#d6e6dc)}
+.badge.pub{background:rgba(214,235,222,.85)}.badge.priv{background:rgba(241,232,200,.9)}
+.chip{background:rgba(239,227,176,.8)}
+blockquote{background:rgba(244,238,208,.6);border-left-color:#d9c36a}
+.lock{background:rgba(241,232,200,.55);border-color:rgba(205,185,120,.6)}
+.sample-note{background:rgba(241,232,200,.6)}
+.btn.primary,.eyebrow,.tab[aria-selected=true],.radios label:has(input:checked),.fab,.toast{background-color:rgba(38,40,56,.84)}
+.topcards{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:clamp(10px,2vw,16px);margin-top:clamp(14px,3vw,22px)}
+.topcards .qcard,.topcards .dcard{margin:0}
+.dcard{display:flex;align-items:center;gap:16px;padding:14px 20px;background:var(--g-bg);border:1px solid var(--g-bd);border-radius:18px;box-shadow:var(--g-sh);-webkit-backdrop-filter:var(--g-blur);backdrop-filter:var(--g-blur)}
+.dcard .dn{font-size:clamp(2.25rem,5vw,3rem);font-weight:800;line-height:1;letter-spacing:-0.04em}
+.dcard .dt{font-size:.9375rem;line-height:1.5;font-weight:600;margin:0}
+.dcard .ds{font-size:.8125rem;line-height:1.5;color:var(--ink-3);margin:2px 0 0}
+@media (max-width:760px){.topcards{grid-template-columns:1fr}}
+@media (prefers-reduced-transparency:reduce){.dcard{-webkit-backdrop-filter:none;backdrop-filter:none}}
 </style>
 </head>
 <body>
@@ -294,7 +323,7 @@ input[type=text],input[type=email],input[type=password],textarea,.ed,.tb select{
 
 <main>
  <div id="home">
-  <section class="wrap"><aside class="qcard" id="quote" aria-label="오늘의 명언"><p class="qt" id="qt">&nbsp;</p><p class="qa" id="qa"></p></aside></section>
+  <section class="wrap topcards"><aside class="dcard" id="dcard" aria-label="오늘의 날짜"><div class="dn" id="dn"></div><div><p class="dt" id="dt"></p><p class="ds" id="ds"></p></div></aside><aside class="qcard" id="quote" aria-label="오늘의 명언"><p class="qt" id="qt">&nbsp;</p><p class="qa" id="qa"></p></aside></section>
   <section class="hero wrap">
     <span class="eyebrow">AI PM 과정 기록</span>
     <h1>AIPM 수업에서 배운 것을<br><span class="hl">복습</span>하며 정리합니다</h1>
@@ -606,6 +635,26 @@ async function loadQuote(){
     try{q=await qGet("https://api.quotable.kurokeita.dev/api/quotes/random",j=>[j.quote.content,j.quote.author&&j.quote.author.name])}catch(e2){}}
   if(q){QCUR=q;qShow(q[0],q[1])}else QCUR=f;
 }
+const DATA_GO_KEY="";
+function kst(){const f=new Intl.DateTimeFormat("ko-KR",{timeZone:"Asia/Seoul",year:"numeric",month:"numeric",day:"numeric",weekday:"long"}).formatToParts(new Date()),g=t=>(f.find(x=>x.type===t)||{}).value;return{y:+g("year"),m:+g("month"),d:+g("day"),w:g("weekday")}}
+async function dayInfo(k){
+  if(!DATA_GO_KEY)return"";
+  const base="https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/";
+  const ymd=(y,m,d)=>y*10000+m*100+d,today=ymd(k.y,k.m,k.d),out=[];
+  for(const op of["getRestDeInfo","get24DivisionsInfo"]){
+    try{const r=await fetch(base+op+"?serviceKey="+encodeURIComponent(DATA_GO_KEY)+"&solYear="+k.y+"&solMonth="+String(k.m).padStart(2,"0")+"&numOfRows=50&_type=json");
+      const it=((((await r.json()).response||{}).body||{}).items||{}).item;
+      (Array.isArray(it)?it:it?[it]:[]).forEach(x=>out.push({n:x.dateName,d:+x.locdate}))}catch(e){}}
+  const t=out.find(x=>x.d===today);if(t)return"오늘은 "+t.n;
+  const nx=out.filter(x=>x.d>today).sort((a,b)=>a.d-b.d)[0];
+  if(nx){const a=new Date(Date.UTC(k.y,k.m-1,k.d)),s=String(nx.d),b=new Date(Date.UTC(+s.slice(0,4),+s.slice(4,6)-1,+s.slice(6)));return nx.n+" D-"+Math.round((b-a)/864e5)}
+  return"";
+}
+async function loadDate(){
+  const k=kst(),doy=Math.round((Date.UTC(k.y,k.m-1,k.d)-Date.UTC(k.y,0,0))/864e5),tot=((k.y%4===0&&k.y%100!==0)||k.y%400===0)?366:365;
+  $("#dn").textContent=k.d;$("#dt").textContent=k.y+"년 "+k.m+"월 "+k.w;$("#ds").textContent="올해 "+doy+"일째 · 남은 "+(tot-doy)+"일";
+  const x=await dayInfo(k);if(x)$("#ds").textContent=x+" · 올해 "+doy+"일째";
+}
 function show(view,id,push){
   delArm=0;
   if((view==="write")&&!loggedIn){after={view,id};view="login";}
@@ -613,7 +662,7 @@ function show(view,id,push){
   if(view==="post"&&all().some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
   else if(view==="login"){$("#page").hidden=false;renderLogin();}
   else if(view==="write"){$("#page").hidden=false;renderWrite(id);}
-  else{view="home";$("#home").hidden=false;renderPicks();renderList();loadQuote();}
+  else{view="home";$("#home").hidden=false;renderPicks();renderList();loadQuote();loadDate();}
   if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
   track(view,id);
   window.scrollTo(0,0);
