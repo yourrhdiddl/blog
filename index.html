@@ -313,6 +313,18 @@ blockquote{background:rgba(244,238,208,.6);border-left-color:#d9c36a}
 .dcard .ds{font-size:.8125rem;line-height:1.5;color:var(--ink-3);margin:2px 0 0}
 @media (max-width:760px){.topcards{grid-template-columns:1fr}}
 @media (prefers-reduced-transparency:reduce){.dcard{-webkit-backdrop-filter:none;backdrop-filter:none}}
+
+/* ===== v1.4 리디자인 반영 (Tailwind 시안의 타이포·카드 수치를 현재 CSS에 이식) ===== */
+body{font-size:15px}
+.hero h1{font-size:clamp(28px,4.2vw,44px);line-height:1.4}
+.hero p{font-size:clamp(16px,1.6vw,18px);line-height:1.75}
+.gal{gap:clamp(12px,2vw,20px)}
+.pbody{padding:clamp(12px,1.4vw,16px)}
+.post h2{font-size:clamp(16px,1.4vw,18px);line-height:1.4}
+.post p{font-size:14px;line-height:1.7}
+.tags span{font-size:13px}
+.btn,.search,.pn a{border-radius:16px}
+.note{font-size:15px}
 </style>
 </head>
 <body>
