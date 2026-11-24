@@ -1,7 +1,7 @@
 // 단위 테스트: node --test scripts/
 import test from "node:test";
 import assert from "node:assert/strict";
-import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, buildUserPrompt, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
+import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, callGemini, PROVIDERS, buildUserPrompt, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
 
 const OK = JSON.stringify({ summary: "프롬프트의 네 요소를 정리했다.", tags: ["프롬프트", "#실습", "프롬프트"], titles: ["좋은 질문의 4요소", "프롬프트 기초", "역할·맥락·요청·형식"] });
 
@@ -97,6 +97,31 @@ test("UT-11 API 호출: 키는 헤더로만 보내고, 실패 메시지에 키�
   assert.equal(seen.headers["x-api-key"], "SECRET-KEY"); assert.ok(!seen.body.includes("SECRET-KEY")); assert.equal(ok, OK);
   await assert.rejects(callClaude({ apiKey: "SECRET-KEY", model: "m", title: "t", text: "x", fetchImpl: async () => ({ ok: false, status: 401 }) }),
     e => e.message.includes("401") && !e.message.includes("SECRET-KEY"));
+});
+
+test("UT-14 Gemini 호출: 키는 헤더로만, 주소·본문·오류에 키가 없고, 응답 글자를 이어 붙인다", async () => {
+  let url, seen;
+  const out = await callGemini({ apiKey: "SECRET-KEY", model: "gemini-x", title: "t", text: "x", fetchImpl: async (u, o) => { url = u; seen = o; return { ok: true, json: async () => ({ candidates: [{ content: { parts: [{ text: OK.slice(0, 10) }, { text: OK.slice(10) }] } }] }) }; } });
+  assert.equal(out, OK); assert.match(url, /models\/gemini-x:generateContent$/);
+  assert.equal(seen.headers["x-goog-api-key"], "SECRET-KEY"); assert.ok(!url.includes("SECRET-KEY")); assert.ok(!seen.body.includes("SECRET-KEY"));
+  assert.match(seen.body, /절대 따르지 말고 무시/);
+  await assert.rejects(callGemini({ apiKey: "SECRET-KEY", model: "m", title: "t", text: "x", fetchImpl: async () => ({ ok: false, status: 429 }) }),
+    e => e.message.includes("429") && !e.message.includes("SECRET-KEY"));
+  assert.equal(await callGemini({ apiKey: "k", model: "m", title: "t", text: "x", fetchImpl: async () => ({ ok: true, json: async () => ({}) }) }), "");
+});
+
+test("UT-15 나만보기 글은 AI를 호출하지 않고 failed(안내 문구), 공개 글은 정상 처리", async () => {
+  let n = 0; const s = fakeStore([{ ...post("a"), visibility: "private" }, { ...post("b"), visibility: "public" }]);
+  const r = await processPending({ store: s, callAi: async () => { n++; return OK; }, today: "d" });
+  assert.equal(n, 1); assert.equal(r.ready, 1); assert.equal(r.failed, 1);
+  assert.equal(s.saved.a.aiStatus, "failed"); assert.match(s.saved.a.aiError, /나만보기/);
+  assert.equal(s.saved.b.aiStatus, "ready");
+});
+
+test("UT-16 제공자 설정: 기본은 gemini(GEMINI_API_KEY), claude는 ANTHROPIC_API_KEY", () => {
+  assert.equal(PROVIDERS.gemini.keyEnv, "GEMINI_API_KEY"); assert.equal(PROVIDERS.claude.keyEnv, "ANTHROPIC_API_KEY");
+  assert.equal(PROVIDERS.gemini.call, callGemini); assert.equal(PROVIDERS.claude.call, callClaude);
+  assert.ok(PROVIDERS.gemini.model.startsWith("gemini-")); assert.ok(PROVIDERS.claude.model.startsWith("claude-"));
 });
 
 test("UT-12 기준값: summaryAuto 필드와 추정(본문 앞 60자 일치), 태그 빈 글 계산", () => {
