@@ -2,6 +2,7 @@
 // 실행: node scripts/gen-ai.mjs [suggest|baseline]   (GitHub Actions 'ai-suggest'가 실행)
 // 규칙(결정 #28): title·summary·tags 는 절대 쓰지 않는다. 반영은 관리자가 화면에서 누를 때만 이뤄진다.
 // 규칙(결정 #27): 키는 환경변수(GitHub Secrets)로만 받고, 어떤 값도 출력하지 않는다.
+// 규칙(결정 #48): AI 제공자는 AI_PROVIDER(gemini 기본 | claude)로 고른다. 나만보기 글은 어떤 제공자에게도 보내지 않는다.
 import fs from "node:fs";
 import { pathToFileURL } from "node:url";
 
@@ -61,6 +62,28 @@ export async function callClaude({ apiKey, model, title, text, fetchImpl = fetch
   return j?.content?.find(c => c.type === "text")?.text ?? "";
 }
 
+// Gemini API 호출(무료 키 가능). 키는 헤더로만 보내고 주소·오류 메시지에 넣지 않는다.
+export async function callGemini({ apiKey, model, title, text, fetchImpl = fetch }) {
+  const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: "user", parts: [{ text: buildUserPrompt(title, text) }] }],
+      generationConfig: { maxOutputTokens: 2000, temperature: 0.3, responseMimeType: "application/json" }
+    })
+  });
+  if (!res.ok) throw new Error(`AI 호출 실패 (HTTP ${res.status})`);
+  const j = await res.json();
+  return (j?.candidates?.[0]?.content?.parts ?? []).map(p => p.text ?? "").join("");
+}
+
+// 제공자별 기본 모델·키 이름 (모델은 AI_MODEL 로 바꾼다. 무료 모델 이름은 자주 바뀐다)
+export const PROVIDERS = {
+  gemini: { keyEnv: "GEMINI_API_KEY", model: "gemini-3.5-flash-lite", call: callGemini },
+  claude: { keyEnv: "ANTHROPIC_API_KEY", model: "claude-sonnet-5-5", call: callClaude }
+};
+
 // ai* 이외 필드를 쓰려 하면 막는다(결정 #28)
 export function assertAiOnly(patch) {
   const bad = Object.keys(patch).filter(k => !k.startsWith("ai"));
@@ -79,6 +102,10 @@ export async function processPending({ store, callAi, model = "", limit = LIMITS
   const res = { pending: pending.length, ready: 0, failed: 0, skipped: 0, calls: 0 };
 
   for (const post of pending) {
+    if (post.visibility === "private") { // 나만보기 글은 외부 AI에 보내지 않는다(결정 #48)
+      await store.saveResult(post.id, { aiStatus: "failed", aiError: "나만보기 글은 AI에 보내지 않아요" });
+      res.failed++; continue;
+    }
     const text = toPlainText(post.content);
     if (!text) { // 글자가 없는 글(이미지만)은 호출하지 않는다
       await store.saveResult(post.id, { aiStatus: "failed", aiError: "본문 텍스트가 없음" });
@@ -153,11 +180,13 @@ async function main() {
     if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rep.md + "\n");
     return;
   }
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY 가 설정되지 않음");
-  const model = process.env.AI_MODEL || "claude-sonnet-5-5";
+  const provider = PROVIDERS[process.env.AI_PROVIDER || "gemini"];
+  if (!provider) throw new Error("AI_PROVIDER 는 gemini 또는 claude 여야 함");
+  const apiKey = process.env[provider.keyEnv];
+  if (!apiKey) throw new Error(provider.keyEnv + " 가 설정되지 않음");
+  const model = process.env.AI_MODEL || provider.model;
   const limit = Number(process.env.AI_DAILY_LIMIT) || LIMITS.dailyDefault;
-  const res = await processPending({ store, callAi: ({ title, text }) => callClaude({ apiKey, model, title, text }), model, limit, log: console.log });
+  const res = await processPending({ store, callAi: ({ title, text }) => provider.call({ apiKey, model, title, text }), model, limit, log: console.log });
   console.log(`결과: 대기 ${res.pending}, 성공 ${res.ready}, 실패 ${res.failed}, 보류(상한) ${res.skipped}, API 호출 ${res.calls}`);
 }
 
