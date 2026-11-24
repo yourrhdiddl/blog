@@ -146,7 +146,11 @@ textarea{min-height:320px;resize:vertical}
 .tb .tbb:hover{background:var(--paper);border-color:var(--line)}
 .tb select{min-height:40px;border:1px solid var(--line);border-radius:8px;background:var(--paper);padding:0 8px;font-weight:600}
 .tb .sep{width:1px;height:24px;background:var(--line);margin:0 4px}
-.tb .sw{width:26px;min-width:26px;height:26px;min-height:26px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--g1);padding:0;cursor:pointer}
+.tb .swg{display:grid;grid-template-columns:repeat(10,24px);gap:4px;padding:2px 4px}
+.tb .sw{width:24px;min-width:24px;height:24px;min-height:24px;border-radius:6px;border:1px solid rgba(0,0,0,.18);padding:0;cursor:pointer}
+.tb .sw:hover,.tb .sw:focus-visible{transform:scale(1.15);outline:2px solid var(--ink);outline-offset:1px}
+.tb .tbb.photo{background:var(--ink);color:#fff;border-radius:8px;padding:0 18px;min-height:40px;font-weight:700}
+.tb .tbb.photo:hover{background:#333;color:#fff;border-color:transparent}
 .ed{min-height:340px;padding:14px 16px;border:1px solid var(--line);border-radius:0 0 10px 10px;background:var(--paper);line-height:1.8;font-weight:500;outline:none}
 .ed:focus{border-color:var(--ink)}
 .ed:empty:before{content:attr(data-ph);color:var(--g2)}
@@ -418,24 +422,33 @@ function phFigure(url){const f=document.createElement("figure");f.className="pf"
   f.append(im,bar,c);return f;}
 function setCaret(n,end){const ed=$("#ed");ed.focus();const r=document.createRange();r.selectNodeContents(n);r.collapse(!end);const s=getSelection();s.removeAllRanges();s.addRange(r);}
 function hasMedia(n){return !!(n.textContent.trim()||(n.querySelector&&n.querySelector("img,figure")));}
+const BLKT=/^(P|DIV|H3|BLOCKQUOTE|UL|OL|FIGURE)$/;
+function normTop(ed){let run=[];const flush=()=>{if(!run.length)return;const p=document.createElement("p");run[0].before(p);run.forEach(n=>p.append(n));run=[];};
+  [...ed.childNodes].forEach(n=>{if(n.nodeType===3&&!run.length&&!n.textContent.trim())return;if(n.nodeType===3||(n.nodeType===1&&!BLKT.test(n.tagName)))run.push(n);else flush();});flush();}
 function insertFig(url){
   const ed=$("#ed");edFocus();const s=getSelection();
-  let r=s.rangeCount?s.getRangeAt(0):null;
-  if(!r||!ed.contains(r.startContainer)){r=document.createRange();r.selectNodeContents(ed);r.collapse(false);}
-  let blk=null;
-  if(r.startContainer===ed)blk=ed.lastChild;
-  else{blk=r.startContainer;while(blk&&blk.parentNode!==ed)blk=blk.parentNode;}
-  if(blk&&blk.nodeType===3){const p=document.createElement("p");blk.replaceWith(p);p.append(blk);blk=p;}
+  let sc=ed,so=ed.childNodes.length;
+  if(s.rangeCount){const g=s.getRangeAt(0);if(ed.contains(g.startContainer)){sc=g.startContainer;so=g.startOffset;}}
+  let ref=sc===ed?(ed.childNodes[so]||null):null;
+  normTop(ed);
+  if(ref&&ref.parentNode!==ed)ref=ref.parentNode;
   const fig=phFigure(url);let tail=newP();
-  if(!blk){ed.append(fig,tail);}
-  else if(blk.tagName==="FIGURE"||!/^(P|DIV)$/.test(blk.tagName)){blk.after(fig,tail);}
-  else{
-    const tr=document.createRange();tr.setStart(r.startContainer,r.startOffset);tr.setEnd(blk,blk.childNodes.length);
-    const frag=tr.extractContents();
-    if(hasMedia(frag)){tail=document.createElement(blk.tagName);tail.append(frag);}
-    const headEmpty=!hasMedia(blk);
-    blk.after(fig,tail);
-    if(headEmpty)blk.remove();
+  if(sc===ed){
+    if(ref&&/^(P|DIV)$/.test(ref.tagName)){ref.before(fig);tail=ref;}
+    else if(ref){ref.before(fig,tail);}
+    else ed.append(fig,tail);
+  }else{
+    let blk=sc;while(blk&&blk.parentNode!==ed)blk=blk.parentNode;
+    if(!blk)ed.append(fig,tail);
+    else if(!/^(P|DIV)$/.test(blk.tagName)){blk.after(fig,tail);}
+    else{
+      const tr=document.createRange();tr.setStart(sc,so);tr.setEnd(blk,blk.childNodes.length);
+      const frag=tr.extractContents();
+      if(hasMedia(frag)){tail=document.createElement(blk.tagName);tail.append(frag);}
+      const headEmpty=!hasMedia(blk);
+      blk.after(fig,tail);
+      if(headEmpty)blk.remove();
+    }
   }
   setCaret(tail);fig.scrollIntoView({block:"nearest"});return fig;
 }
@@ -594,23 +607,17 @@ function renderWrite(id){
      <span class="sep"></span>
      <select id="szSel" aria-label="글씨 크기"><option value="">글씨 크기</option><option value="2">작게</option><option value="3">보통</option><option value="5">크게</option><option value="6">아주 크게</option></select>
      <span class="sep"></span>
-     <button type="button" class="tbb sw" data-color="#1b1b1b" style="background:#1b1b1b" title="검정" aria-label="글자색 검정"></button>
-     <button type="button" class="tbb sw" data-color="#d93025" style="background:#d93025" title="빨강" aria-label="글자색 빨강"></button>
-     <button type="button" class="tbb sw" data-color="#e8710a" style="background:#e8710a" title="주황" aria-label="글자색 주황"></button>
-     <button type="button" class="tbb sw" data-color="#188038" style="background:#188038" title="초록" aria-label="글자색 초록"></button>
-     <button type="button" class="tbb sw" data-color="#1a73e8" style="background:#1a73e8" title="파랑" aria-label="글자색 파랑"></button>
-     <button type="button" class="tbb sw" data-color="#7b3fe4" style="background:#7b3fe4" title="보라" aria-label="글자색 보라"></button>
-     <button type="button" class="tbb sw" data-color="#7a7a7a" style="background:#7a7a7a" title="회색" aria-label="글자색 회색"></button>
+     <span class="swg" role="group" aria-label="글자색"><button type="button" class="tbb sw" data-color="#111111" style="background:#111111" title="검정" aria-label="글자색 검정"></button><button type="button" class="tbb sw" data-color="#475569" style="background:#475569" title="진회색" aria-label="글자색 진회색"></button><button type="button" class="tbb sw" data-color="#6b7280" style="background:#6b7280" title="회색" aria-label="글자색 회색"></button><button type="button" class="tbb sw" data-color="#dc2626" style="background:#dc2626" title="빨강" aria-label="글자색 빨강"></button><button type="button" class="tbb sw" data-color="#ea580c" style="background:#ea580c" title="주황" aria-label="글자색 주황"></button><button type="button" class="tbb sw" data-color="#d97706" style="background:#d97706" title="호박" aria-label="글자색 호박"></button><button type="button" class="tbb sw" data-color="#ca8a04" style="background:#ca8a04" title="노랑" aria-label="글자색 노랑"></button><button type="button" class="tbb sw" data-color="#65a30d" style="background:#65a30d" title="연두" aria-label="글자색 연두"></button><button type="button" class="tbb sw" data-color="#16a34a" style="background:#16a34a" title="초록" aria-label="글자색 초록"></button><button type="button" class="tbb sw" data-color="#059669" style="background:#059669" title="에메랄드" aria-label="글자색 에메랄드"></button><button type="button" class="tbb sw" data-color="#0d9488" style="background:#0d9488" title="청록" aria-label="글자색 청록"></button><button type="button" class="tbb sw" data-color="#0891b2" style="background:#0891b2" title="시안" aria-label="글자색 시안"></button><button type="button" class="tbb sw" data-color="#0284c7" style="background:#0284c7" title="하늘" aria-label="글자색 하늘"></button><button type="button" class="tbb sw" data-color="#2563eb" style="background:#2563eb" title="파랑" aria-label="글자색 파랑"></button><button type="button" class="tbb sw" data-color="#4f46e5" style="background:#4f46e5" title="남색" aria-label="글자색 남색"></button><button type="button" class="tbb sw" data-color="#7c3aed" style="background:#7c3aed" title="보라" aria-label="글자색 보라"></button><button type="button" class="tbb sw" data-color="#9333ea" style="background:#9333ea" title="자주" aria-label="글자색 자주"></button><button type="button" class="tbb sw" data-color="#c026d3" style="background:#c026d3" title="분홍보라" aria-label="글자색 분홍보라"></button><button type="button" class="tbb sw" data-color="#db2777" style="background:#db2777" title="분홍" aria-label="글자색 분홍"></button><button type="button" class="tbb sw" data-color="#e11d48" style="background:#e11d48" title="장미" aria-label="글자색 장미"></button></span>
      <span class="sep"></span>
      <button type="button" class="tbb" data-cmd="formatBlock" data-val="<h3>" title="소제목">소제목</button>
      <button type="button" class="tbb" data-cmd="formatBlock" data-val="<blockquote>" title="인용">인용</button>
      <button type="button" class="tbb" data-cmd="insertUnorderedList" title="목록">• 목록</button>
      <button type="button" class="tbb" data-cmd="removeFormat" title="서식 지우기">서식 지움</button>
      <span class="sep"></span>
-     <button type="button" class="tbb" id="imgBtn" title="사진 넣기 (여러 장 가능)">🖼 사진</button>
+     <button type="button" class="tbb photo" id="imgBtn" title="사진 넣기 (여러 장 가능)">사진 넣기</button>
      <input type="file" id="imgFile" accept="image/*" multiple hidden>
     </div>
-    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 사진은 위의 🖼 사진 버튼으로 넣거나, 끌어다 놓거나, 붙여넣어도 돼요."></div>
+    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 사진은 위의 검은색 사진 넣기 버튼으로 넣거나, 끌어다 놓거나, 붙여넣어도 돼요."></div>
     <div class="edhint" style="margin-top:6px">사진은 가로 900px로 줄여서 글에 함께 저장돼요. 사진을 누르면 ↑ ↓ ✕ 버튼이 나오고, 끌어서 순서를 바꿀 수 있어요.</div><div id="edMeter" class="edhint" style="margin-top:4px" aria-live="polite"></div></div>
    <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
   initEditor();
