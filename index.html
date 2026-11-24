@@ -325,6 +325,16 @@ body{font-size:15px}
 .tags span{font-size:13px}
 .btn,.search,.pn a{border-radius:16px}
 .note{font-size:15px}
+
+/* AI 글 정리 도우미 (v1.5) */
+.aib{display:inline-flex;padding:1px 10px;border-radius:999px;font-size:.8125rem;font-weight:700;line-height:1.6;background:var(--sky);color:var(--ink)}
+.aib.on{background:var(--mint)}
+.aicard{margin:16px 0;padding:16px 18px;border:1px solid var(--line);border-radius:16px;background:rgba(184,240,208,.3)}
+.aicard.fail{background:rgba(255,201,221,.35)}.aicard.done{background:transparent;padding:8px 14px}
+.aicard label{display:block;margin-top:12px;font-weight:700;font-size:.9375rem}
+.aicard textarea{min-height:84px;height:84px;resize:vertical}.aicard textarea,.aicard input[type=text]{width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font:inherit}
+.aicard .aih{margin-top:12px;font-weight:700;font-size:.9375rem}.aicard .row{margin-top:14px}
+.aiopt{display:block;font-weight:600}.aiopt small{display:block;font-weight:500;color:var(--ink-3)}
 </style>
 </head>
 <body>
@@ -359,13 +369,13 @@ body{font-size:15px}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v0.9 · 3차: 로그인과 글쓰기(서식·이미지·갤러리·링크 미리보기·방문 통계) (샘플 글 6개는 임의 내용입니다) · 방문 통계는 Google Analytics로 수집합니다</div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v1.5 · 3차 + 미니프로젝트: AI 글 정리 도우미(관리자 제안 카드) (샘플 글 6개는 임의 내용입니다) · 방문 통계는 Google Analytics로 수집합니다</div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // Firebase 웹 설정값은 화면에 보여도 되는 값입니다. 데이터는 Firestore 보안 규칙이 지킵니다.
 const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
 const auth=getAuth(app),db=getFirestore(app);
@@ -432,7 +442,7 @@ async function loadRemote(){
     const snap=await getDocs(loggedIn?ref:query(ref,where("visibility","==","public")));
     remote=snap.docs.map(x=>{const r=x.data(),ms=r.createdAt?r.createdAt.toMillis():Date.now();
       const html=r.contentFormat==="html"?clean(r.content||""):"",own=COVER_RE.test(r.cover||"")?r.cover:"";
-      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,pick:esc(r.title||"")};});
+      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,pick:esc(r.title||""),aiStatus:r.aiStatus||"",aiError:r.aiError||"",aiSuggest:normAi(r.aiSuggest)};});
   }catch(e){console.error(e);loadErr="글을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";remote=[];}
 }
 const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
@@ -440,7 +450,7 @@ function renderList(){
   const rows=all().filter(p=>(f==="all"||p.v===f)&&(!q||(p.t+p.s).includes(q))).slice();
   $("#list").className="gal";
   $("#list").innerHTML=rows.length?rows.map(p=>`<a class="post" href="#/post/${p.id}" data-id="${p.id}">${thumb(p)}<div class="pbody">
-    <div class="meta">${badge(p)}<time>${p.d}</time></div>
+    <div class="meta">${badge(p)}${aiChip(p)}<time>${p.d}</time></div>
     <h2><span>${p.t}</span></h2><p>${p.s}</p>
     <div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div></div></a>`).join("")
    :`<div class="empty">${loadErr||"표시할 글이 없어요."}</div>`;
@@ -516,6 +526,51 @@ function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b
   else if(b.split("\n").every(l=>l.startsWith("- ")))out.push(["ul",b.split("\n").map(l=>esc(l.slice(2)))]);
   else out.push(["p",esc(b).replace(/\n/g,"<br>")]);});return out;}
 let delArm=0,after=null;
+const escA=s=>esc(s).replace(/"/g,"&quot;");
+function normAi(a){if(!a||typeof a!=="object")return null;const L=x=>Array.isArray(x)?x.map(String):[];return{summary:String(a.summary||""),tags:L(a.tags),titles:L(a.titles)};}
+function aiChip(p){if(!loggedIn||!p.remote)return"";
+  if(p.aiStatus==="pending")return`<span class="aib">AI 제안 대기</span>`;
+  if(p.aiStatus==="ready")return`<span class="aib on">AI 제안 도착</span>`;return"";}
+function aiCard(p){
+  if(!loggedIn||!p.remote||!p.aiStatus||p.aiStatus==="none")return"";
+  const st=p.aiStatus,sg=p.aiSuggest;
+  if(st==="pending")return`<div class="aicard" role="status" data-pid="${p.id}"><b>AI 제안 대기 중</b><p>글을 저장했어요. 제안은 최대 15분 뒤에 도착해요.</p><div class="row"><button class="btn" type="button" data-ai="refresh">제안 확인하기</button></div></div>`;
+  if(st==="failed")return`<div class="aicard fail" role="status" data-pid="${p.id}"><b>AI 제안을 만들지 못했어요</b><p>제목·요약·태그는 직접 입력해 주세요.${p.aiError?` <small>(${esc(p.aiError)})</small>`:""}</p></div>`;
+  if(st==="applied"||st==="dismissed")return`<div class="aicard done" data-pid="${p.id}"><small>AI 제안: ${st==="applied"?"반영했어요":"무시했어요"}</small></div>`;
+  if(st==="ready"&&sg)return`<div class="aicard" id="aiCard" data-pid="${p.id}"><b>AI 제안 · 반영은 내가 정해요</b>
+   <p><small>AI는 틀릴 수 있어요. 고쳐서 반영해도 되고, 무시해도 돼요.</small></p>
+   <label><input type="checkbox" id="aiUseS" checked> 요약 <small>(120자 이내)</small></label>
+   <textarea id="aiS" rows="3" maxlength="150">${esc(sg.summary)}</textarea>
+   <label><input type="checkbox" id="aiUseT" checked> 태그 <small>쉼표로 구분</small></label>
+   <input type="text" id="aiT" value="${escA(sg.tags.join(", "))}">
+   <div class="aititles"><div class="aih">제목 후보</div><div class="radios">
+    <label><input type="radio" name="aiTi" value="" checked> 바꾸지 않음</label>
+    ${sg.titles.map((t,i)=>`<label><input type="radio" name="aiTi" value="${i}"> ${esc(t)}</label>`).join("")}</div></div>
+   <div class="row"><button class="btn primary" type="button" data-ai="apply">선택한 제안 반영</button><button class="btn" type="button" data-ai="dismiss">무시</button></div></div>`;
+  return"";
+}
+let aiBusy=false;
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-ai]");if(!b||!loggedIn||aiBusy)return;
+  const card=b.closest(".aicard"),id=card&&card.dataset.pid,p=remote.find(x=>x.id===id);if(!p)return;
+  const act=b.dataset.ai;
+  if(act==="refresh"){await loadRemote();const n=remote.find(x=>x.id===id);toast(n&&n.aiStatus==="pending"?"아직 만드는 중이에요":"제안 상태를 새로 불러왔어요");return show("post",id,false);}
+  const sg=p.aiSuggest,fb={summary:"ignored",tags:"ignored",title:"ignored"},patch={};
+  if(act==="apply"&&sg){
+    if($("#aiUseS").checked){const v=$("#aiS").value.trim();if(v){patch.summary=v;fb.summary=v===sg.summary?"accepted":"edited";}}
+    if($("#aiUseT").checked){const v=$("#aiT").value.split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);if(v.length){patch.tags=v;fb.tags=v.join(",")===sg.tags.join(",")?"accepted":"edited";}}
+    const ti=document.querySelector('input[name="aiTi"]:checked');if(ti&&ti.value!==""&&sg.titles[+ti.value]){patch.title=sg.titles[+ti.value];fb.title="accepted";}
+    if(!Object.keys(patch).length)return toast("반영할 항목을 골라 주세요");
+  }
+  aiBusy=true;b.disabled=true;
+  try{
+    await updateDoc(doc(db,"posts",id),{...patch,aiStatus:act==="apply"?"applied":"dismissed",aiFeedback:fb,aiAppliedAt:serverTimestamp()});
+    await loadRemote();toast(act==="apply"?"반영했어요":"무시했어요");show("post",id,false);
+  }catch(err){
+    console.error(err);b.disabled=false;
+    toast(err.code==="permission-denied"?"수정 권한이 없어요. 보안 규칙을 확인해 주세요":"저장하지 못했어요. 다시 시도해 주세요");
+  }finally{aiBusy=false;}
+});
 function renderDetail(id){
   const L=all(),i=L.findIndex(p=>p.id===id),p=L[i],pr=L[i-1],nx=L[i+1];
   $("#detail").innerHTML=`<button class="back" data-home>← 글 목록</button><article class="article">
@@ -524,6 +579,7 @@ function renderDetail(id){
    <h1><span class="hl">${p.t}</span></h1>
    ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
+   ${aiCard(p)}
    <div class="body">${p.body.map(block).join("")}</div><div id="readEnd" style="height:1px"></div>
    ${p.remote&&p.v==="public"?`<div class="row" style="margin-top:20px"><button class="btn" id="shareBtn" data-share="${p.id}" type="button">🔗 공유 링크 복사</button></div>`:""}
    <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
@@ -544,6 +600,7 @@ function renderWrite(id){
      <label><input type="radio" name="v" value="private" ${p&&p.v==="private"?"checked":""}> 🔒 나만보기</label></div></div>
    <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p?p.s.replace(/"/g,"&quot;"):""}"></label>
    <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
+   <label class="aiopt"><input type="checkbox" name="ai" value="on" checked> AI 제안 받기 <small>저장 후 최대 15분 뒤에 요약·태그·제목 후보가 도착해요. 반영은 내가 정해요.</small></label>
    <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">대표 이미지 <small style="font-weight:500">선택 · 목록 카드와 글 맨 위에 보여요. 비워 두면 본문 첫 이미지를 써요.</small></div>
     <div class="coverbox"><div id="coverPrev" class="thumb ph c0">대표 이미지 없음</div>
      <div class="row"><button type="button" class="btn" id="coverBtn">대표 이미지 고르기</button><button type="button" class="btn" id="coverDel" hidden>지우기</button></div>
@@ -697,7 +754,7 @@ document.addEventListener("submit",async e=>{
   if(new Blob([content]).size+coverData.length>950000){btn.disabled=false;btn.textContent="발행하기";return toast("글이 너무 커요. 이미지를 줄여 주세요");}
   const summary=d.get("s").trim()||plain.slice(0,60);
   try{
-    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp()});
+    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
     await loadRemote();toast("발행했어요");show("post",ref.id,true);
   }catch(err){
     console.error(err);btn.disabled=false;btn.textContent="발행하기";
