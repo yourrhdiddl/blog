@@ -212,7 +212,12 @@ textarea{min-height:320px;resize:vertical}
 .pf figcaption{margin-top:8px;font:500 13px/1.5 var(--display);color:var(--mute);text-align:center}
 .ed figure.pf figcaption{min-height:1.5em;outline:none;cursor:text}
 .ed figure.pf figcaption:empty:before{content:attr(data-ph);color:var(--g2)}
-.ed figure.pf.sel img{outline:3px solid var(--ink);outline-offset:2px}
+.ed figure.pf.sel:not(.g2):not(.g3) img,.ed figure.pf.sel img.cur{outline:3px solid var(--ink);outline-offset:2px}
+.ed figure.pf.g2,.ed figure.pf.g3,.article .body figure.pf.g2,.article .body figure.pf.g3{display:grid;gap:6px;align-items:start}
+.ed figure.pf.g2,.article .body figure.pf.g2{grid-template-columns:repeat(2,1fr)}
+.ed figure.pf.g3,.article .body figure.pf.g3{grid-template-columns:repeat(3,1fr)}
+.ed figure.pf.g2 img,.ed figure.pf.g3 img,.article .body figure.pf.g2 img,.article .body figure.pf.g3 img{width:100%;aspect-ratio:1/1;object-fit:cover}
+.ed figure.pf.g2 figcaption,.ed figure.pf.g3 figcaption,.article .body figure.pf.g2 figcaption,.article .body figure.pf.g3 figcaption{grid-column:1/-1;margin-top:2px}
 .ed figure.pf.dragging{opacity:.4}
 .phbar{display:none;position:absolute;top:8px;right:8px;gap:6px}
 .ed figure.pf.sel .phbar{display:flex}
@@ -390,7 +395,7 @@ function clean(h){
     if(t==="IMG"){const src=c.getAttribute("src")||"";
       if(!/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/.test(src)){c.remove();return;}
       keep.src=src;keep.alt=(c.getAttribute("alt")||"").slice(0,200);keep.loading="lazy";}
-    if(t==="FIGURE"){if(!c.querySelector("img")){c.remove();return;}keep.class="pf";}
+    if(t==="FIGURE"){const gi=c.querySelectorAll("img").length;if(!gi){c.remove();return;}keep.class=gi>1?"pf g"+Math.min(gi,3):"pf";}
     if(t==="FIGCAPTION"&&!c.textContent.trim()){c.remove();return;}
     if(t==="A"){const href=c.getAttribute("href")||"";
       if(!/^https?:\/\//i.test(href)){c.replaceWith(...c.childNodes);return;}
@@ -414,12 +419,13 @@ function edFocus(){const ed=$("#ed"),cur=getSelection();const inside=cur.rangeCo
   else{const r=document.createRange();r.selectNodeContents(ed);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);}}
 function edCmd(cmd,val){edFocus();document.execCommand("styleWithCSS",false,false);document.execCommand(cmd,false,val);}
 function newP(){const p=document.createElement("p");p.innerHTML="<br>";return p;}
-function phFigure(url){const f=document.createElement("figure");f.className="pf";f.contentEditable="false";
-  const im=new Image();im.src=url;im.alt="";im.draggable=true;
+function phFigure(urls){urls=[].concat(urls);const f=document.createElement("figure");f.contentEditable="false";
+  const ims=urls.map(u=>{const im=new Image();im.src=u;im.alt="";im.draggable=true;return im;});
   const bar=document.createElement("span");bar.className="phbar";bar.contentEditable="false";
   [["up","↑","위로 옮기기"],["down","↓","아래로 옮기기"],["del","✕","사진 지우기"]].forEach(([k,t,l])=>{const b=document.createElement("button");b.type="button";b.dataset.ph=k;b.textContent=t;b.setAttribute("aria-label",l);bar.appendChild(b);});
   const c=document.createElement("figcaption");c.contentEditable="true";c.dataset.ph="사진 설명을 입력하세요";
-  f.append(im,bar,c);return f;}
+  f.append(...ims,bar,c);gcls(f);return f;}
+function gcls(f){const n=f.querySelectorAll("img").length;f.classList.remove("g2","g3");f.classList.add("pf");if(n>1)f.classList.add("g"+Math.min(n,3));}
 function setCaret(n,end){const ed=$("#ed");ed.focus();const r=document.createRange();r.selectNodeContents(n);r.collapse(!end);const s=getSelection();s.removeAllRanges();s.addRange(r);}
 function hasMedia(n){return !!(n.textContent.trim()||(n.querySelector&&n.querySelector("img,figure")));}
 const BLKT=/^(P|DIV|H3|BLOCKQUOTE|UL|OL|FIGURE)$/;
@@ -457,12 +463,14 @@ async function edImages(files){
   if(!fs.length)return toast("이미지 파일만 넣을 수 있어요");
   const urls=await Promise.all(fs.map(f=>resizeImg(f).catch(()=>null)));
   const ok=urls.filter(Boolean);
-  ok.forEach(insertFig);
+  for(let i=0;i<ok.length;i+=3)insertFig(ok.slice(i,i+3));
   if(ok.length<fs.length)toast("사진 "+(fs.length-ok.length)+"장을 불러오지 못했어요");
   updMeter();
 }
 let selFig=null,dragFig=null,meterT=0;
-function clearSel(){document.querySelectorAll("#ed figure.pf.sel").forEach(f=>f.classList.remove("sel"));selFig=null;}
+let selImg=null;
+function clearSel(){document.querySelectorAll("#ed figure.pf.sel").forEach(f=>f.classList.remove("sel"));document.querySelectorAll("#ed img.cur").forEach(i=>i.classList.remove("cur"));selFig=null;selImg=null;}
+function delSel(f){const ims=f.querySelectorAll("img");if(ims.length>1&&selImg&&f.contains(selImg)){selImg.remove();selImg=null;gcls(f);updMeter();}else delFig(f);}
 function delFig(f){const n=f.nextElementSibling||f.previousElementSibling;f.remove();selFig=null;if(n&&n.tagName!=="FIGURE")setCaret(n);updMeter();}
 function moveFig(f,d){const ed=$("#ed");
   if(d<0){const p=f.previousElementSibling;if(p)ed.insertBefore(f,p);}
@@ -470,7 +478,7 @@ function moveFig(f,d){const ed=$("#ed");
   if(!f.nextElementSibling)f.after(newP());
   f.scrollIntoView({block:"nearest"});updMeter();}
 function updMeter(){clearTimeout(meterT);meterT=setTimeout(()=>{const ed=$("#ed"),m=$("#edMeter");if(!ed||!m)return;
-  const n=ed.querySelectorAll("figure.pf").length,kb=Math.round((new Blob([clean(ed.innerHTML)]).size+coverData.length)/1024);
+  const n=ed.querySelectorAll("figure.pf img").length,kb=Math.round((new Blob([clean(ed.innerHTML)]).size+coverData.length)/1024);
   m.textContent=`사진 ${n}장 · 글 전체 약 ${kb}KB / 900KB`+(kb>800?" · 거의 찼어요. 사진을 줄이거나 지워 주세요":"");
   m.style.color=kb>900?"var(--danger)":"";},250);}
 const COVER_RE=/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/;
@@ -614,11 +622,11 @@ function renderWrite(id){
      <button type="button" class="tbb" data-cmd="insertUnorderedList" title="목록">• 목록</button>
      <button type="button" class="tbb" data-cmd="removeFormat" title="서식 지우기">서식 지움</button>
      <span class="sep"></span>
-     <button type="button" class="tbb photo" id="imgBtn" title="사진 넣기 (여러 장 가능)">사진 넣기</button>
+     <button type="button" class="tbb photo" id="imgBtn" title="사진 넣기 (한 번에 여러 장 고르면 한 줄에 최대 3장씩 붙어요)" aria-label="사진 넣기">image</button>
      <input type="file" id="imgFile" accept="image/*" multiple hidden>
     </div>
-    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 사진은 위의 검은색 사진 넣기 버튼으로 넣거나, 끌어다 놓거나, 붙여넣어도 돼요."></div>
-    <div class="edhint" style="margin-top:6px">사진은 가로 900px로 줄여서 글에 함께 저장돼요. 사진을 누르면 ↑ ↓ ✕ 버튼이 나오고, 끌어서 순서를 바꿀 수 있어요.</div><div id="edMeter" class="edhint" style="margin-top:4px" aria-live="polite"></div></div>
+    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 사진은 위의 검은색 image 버튼으로 넣거나, 끌어다 놓거나, 붙여넣어도 돼요."></div>
+    <div class="edhint" style="margin-top:6px">사진은 가로 900px로 줄여서 글에 함께 저장돼요. 한 번에 여러 장을 고르면 한 줄에 최대 3장씩 붙어요. 사진을 누르면 ↑ ↓ ✕ 버튼이 나오고, 끌어서 순서를 바꿀 수 있어요.</div><div id="edMeter" class="edhint" style="margin-top:4px" aria-live="polite"></div></div>
    <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
   initEditor();
 }
@@ -655,13 +663,13 @@ function initEditor(){
   ed.addEventListener("mousedown",e=>{
     if(e.target.closest(".phbar")){e.preventDefault();return;}
     const f=e.target.closest("figure.pf");clearSel();
-    if(f&&!e.target.closest("figcaption")){f.classList.add("sel");selFig=f;}});
+    if(f&&!e.target.closest("figcaption")){f.classList.add("sel");selFig=f;if(e.target.tagName==="IMG"){selImg=e.target;e.target.classList.add("cur");}}});
   ed.addEventListener("click",e=>{const b=e.target.closest(".phbar button");if(!b)return;e.preventDefault();
-    const f=b.closest("figure.pf");if(b.dataset.ph==="del")delFig(f);else moveFig(f,b.dataset.ph==="up"?-1:1);});
+    const f=b.closest("figure.pf");if(b.dataset.ph==="del")delSel(f);else moveFig(f,b.dataset.ph==="up"?-1:1);});
   ed.addEventListener("keydown",e=>{
     const cap=e.target.closest&&e.target.closest("figcaption");
     if(cap&&e.key==="Enter"){e.preventDefault();const f=cap.closest("figure.pf");let n=f.nextElementSibling;if(!n||n.tagName==="FIGURE"){n=newP();f.after(n);}setCaret(n);return;}
-    if(selFig&&!cap&&(e.key==="Delete"||e.key==="Backspace")){e.preventDefault();delFig(selFig);return;}
+    if(selFig&&!cap&&(e.key==="Delete"||e.key==="Backspace")){e.preventDefault();delSel(selFig);return;}
     if(selFig&&!cap&&e.key.length===1)clearSel();});
   ed.addEventListener("input",updMeter);
   updMeter();
