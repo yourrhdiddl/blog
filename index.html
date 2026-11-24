@@ -393,8 +393,14 @@ body:has(#detail:not([hidden]) .article){background:var(--soft)}
 @media (prefers-color-scheme:dark){#detail .article{box-shadow:0 10px 32px rgba(0,0,0,.28)}}
 @media (max-width:620px){#detail .article{padding:26px 20px 28px;border-radius:18px;margin-top:8px}#detail.wrap{padding-left:12px;padding-right:12px}}
 /* ===== v3.3: 글 상세 다듬기 (별 배경, 연회색 태그, 제목 줄바꿈, 설명 글자, 인용·형광펜) ===== */
-body:has(#detail:not([hidden]) .article){background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='430' viewBox='0 0 400 430'%3E%3Cg fill='%235cc7bf' fill-opacity='0.13'%3E%3Cpath transform='translate(34 40) scale(0.9)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(250 22) scale(0.6)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(330 150) scale(1.1)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(70 210) scale(0.7)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(210 300) scale(1.0)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(360 330) scale(0.6)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(120 395) scale(0.8)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(20 330) scale(0.55)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3C/g%3E%3C/svg%3E");background-color:var(--soft)}
-#detail .article{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='430' viewBox='0 0 400 430'%3E%3Cg fill='%235cc7bf' fill-opacity='0.16'%3E%3Cpath transform='translate(34 40) scale(0.9)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(250 22) scale(0.6)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(330 150) scale(1.1)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(70 210) scale(0.7)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(210 300) scale(1.0)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(360 330) scale(0.6)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(120 395) scale(0.8)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3Cpath transform='translate(20 330) scale(0.55)' d='M10 0 L12.2 7.8 L20 10 L12.2 12.2 L10 20 L7.8 12.2 L0 10 L7.8 7.8 Z'/%3E%3C/g%3E%3C/svg%3E");background-color:var(--card)}
+body:has(#detail:not([hidden]) .article){background-color:var(--soft)}
+/* 본문 배경 왕별: 홈 상단의 둥근 별(.hero)과 같은 모양·색(--star)을 글 카드 안에 크게 깔고, 글은 그 위에 올린다 */
+#detail .article{position:relative;overflow:hidden;isolation:isolate}
+#detail .article>*{position:relative;z-index:1}
+#detail .article::before,#detail .article::after{content:"";position:absolute;pointer-events:none;z-index:0;background:var(--star);-webkit-mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 6l12.2 28.4 30.8 2.7-23.4 20.3 7 30.1L50 72.6 23.4 87.5l7-30.1L7 37.1l30.8-2.7z' fill='black' stroke='black' stroke-width='5' stroke-linejoin='round'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 6l12.2 28.4 30.8 2.7-23.4 20.3 7 30.1L50 72.6 23.4 87.5l7-30.1L7 37.1l30.8-2.7z' fill='black' stroke='black' stroke-width='5' stroke-linejoin='round'/></svg>") center/contain no-repeat}
+#detail .article::before{width:440px;height:440px;right:-150px;top:-120px;transform:rotate(12deg)}
+#detail .article::after{width:260px;height:260px;left:-80px;bottom:-70px;transform:rotate(-14deg)}
+@media (max-width:620px){#detail .article::before{width:300px;height:300px;right:-110px;top:-80px}#detail .article::after{width:180px;height:180px;left:-60px;bottom:-50px}}
 #detail .article h1{text-wrap:balance;word-break:keep-all;overflow-wrap:break-word}
 #detail .article .lead{font-size:.9375rem;line-height:1.65;color:color-mix(in srgb,var(--ink) 52%,var(--card))}
 #detail .article .tags span{background:color-mix(in srgb,var(--ink) 7%,var(--card));color:color-mix(in srgb,var(--ink) 58%,var(--card));border-color:transparent}
@@ -441,7 +447,7 @@ mark.y,.hl.y{background:linear-gradient(transparent 14%,color-mix(in srgb,color-
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v3.3 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v3.4 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">글쓰기</button>
 
 <script type="module">
