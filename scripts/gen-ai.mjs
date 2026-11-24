@@ -27,10 +27,19 @@ export const SYSTEM_PROMPT = [
   `반드시 JSON 한 개만 출력한다(설명·마크다운 금지): {"summary":"...","tags":["..."],"titles":["..."]}`,
   `summary: 한국어 공백 포함 ${LIMITS.summaryMaxTarget}자 안팎(70~90자)의 1~2문장. 절대로 ${LIMITS.summaryMax}자를 넘기지 않는다(넘기면 버려진다). 쓴 뒤 글자 수를 세어 길면 줄인다. 글에 없는 내용을 지어내지 않는다.`,
   `tags: 3~${LIMITS.tagCount}개, '#' 없이, 각 ${LIMITS.tagMax}자 이내.`,
-  `titles: 서로 다른 제목 ${LIMITS.titleCount}개, 각 ${LIMITS.titleMax}자 이내.`
+  `titles: 서로 다른 제목 ${LIMITS.titleCount}개, 각 ${LIMITS.titleMax}자 이내. 원래 제목과 같거나 띄어쓰기·기호만 다른 제목은 넣지 않는다. 글의 핵심 결론이나 독자가 얻는 것이 드러나도록 다른 표현으로 쓴다.`
 ].join("\n");
 
 export const buildUserPrompt = (title, text, hint = "") => `<post>\n제목: ${title || "(제목 없음)"}\n본문: ${text}\n</post>` + (hint ? `\n\n[재요청] ${hint}` : "");
+
+// 제목 후보 중 원제와 같은 것(띄어쓰기·기호·대소문자만 다른 경우 포함)을 뺀다. 전부 같으면 그대로 둔다(결정 #58)
+const normTitle = t => String(t ?? "").toLowerCase().replace(/[\s\p{P}\p{S}]+/gu, "");
+export function dropSameTitles(titles, original) {
+  const o = normTitle(original);
+  if (!o) return titles;
+  const kept = titles.filter(t => normTitle(t) !== o);
+  return kept.length ? kept : titles;
+}
 
 // AI 응답 문자열 → 검사된 제안. 규칙을 어기면 오류를 던진다(호출하는 쪽이 재시도·실패 처리)
 export function parseSuggest(raw) {
@@ -145,7 +154,7 @@ export async function processPending({ store, callAi, model = "", limit = LIMITS
       if (count >= limit) { err = err || "하루 호출 상한 도달"; break; }
       count++; res.calls++;
       const hint = a === 0 ? "" : `직전 응답이 규칙을 어겼다(${err}). summary를 ${LIMITS.summaryMax}자보다 훨씬 짧게, 70자 안팎 한 문장으로 다시 쓰고 JSON만 출력한다.`;
-      try { value = parseSuggest(await callAi({ title: post.title, text, hint })); break; }
+      try { value = parseSuggest(await callAi({ title: post.title, text, hint })); value.titles = dropSameTitles(value.titles, post.title); break; }
       catch (e) { err = String(e.message || e).slice(0, 200); }
     }
     if (value) {
