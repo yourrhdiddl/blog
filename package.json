@@ -3,6 +3,7 @@
   "version": "0.4.0",
   "private": true,
   "scripts": {
-    "dev": "npx --yes serve . -l 3000"
+    "dev": "npx --yes serve . -l 3000",
+    "test": "node --test scripts/gen-ai.test.mjs"
   }
 }
