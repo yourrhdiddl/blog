@@ -759,7 +759,7 @@ document.addEventListener("click",async e=>{
   if(act==="refresh"){await loadRemote();const n=remote.find(x=>x.id===id);toast(n&&n.aiStatus==="pending"?"아직 만드는 중이에요":"제안 상태를 새로 불러왔어요");return show("post",id,false);}
   const sg=p.aiSuggest,fb={summary:"ignored",tags:"ignored",title:"ignored"},patch={};
   if(act==="apply"&&sg){
-    if($("#aiUseS").checked){const v=$("#aiS").value.trim();if(v){patch.summary=v;fb.summary=v===sg.summary?"accepted":"edited";}}
+    if($("#aiUseS").checked){const v=$("#aiS").value.trim();if(v){patch.summary=v;patch.summaryAuto=false;fb.summary=v===sg.summary?"accepted":"edited";}}
     if($("#aiUseT").checked){const v=$("#aiT").value.split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);if(v.length){patch.tags=v;fb.tags=v.join(",")===sg.tags.join(",")?"accepted":"edited";}}
     const ti=document.querySelector('input[name="aiTi"]:checked');if(ti&&ti.value!==""&&sg.titles[+ti.value]){patch.title=sg.titles[+ti.value];fb.title="accepted";}
     if(!Object.keys(patch).length)return toast("반영할 항목을 골라 주세요");
