@@ -140,3 +140,21 @@ test("UT-13 한국시간 날짜: UTC 15:00 이후는 다음 날", () => {
   assert.equal(kstDate(Date.parse("2026-11-24T14:59:00Z")), "2026-11-24");
   assert.equal(kstDate(Date.parse("2026-11-24T15:00:00Z")), "2026-11-25");
 });
+
+test("UT-17 재시도 때는 직전 오류를 알려 주고 더 짧게 쓰라는 안내(hint)를 보낸다", async () => {
+  const hints = []; const s = fakeStore([post("a")]);
+  const LONG = JSON.stringify({ summary: "가".repeat(130), tags: ["a"], titles: ["b"] });
+  const r = await processPending({ store: s, callAi: async ({ hint }) => { hints.push(hint); return hints.length === 1 ? LONG : OK; }, today: "d" });
+  assert.equal(r.ready, 1); assert.equal(hints[0], ""); assert.match(hints[1], /너무 김/); assert.match(hints[1], /70자/);
+});
+
+test("UT-18 요약 목표는 ${LIMITS.summaryMaxTarget}자 안팎이고 상한 120자는 프롬프트에 명시된다", () => {
+  assert.equal(LIMITS.summaryMaxTarget, 80); assert.match(SYSTEM_PROMPT, /80자 안팎/); assert.match(SYSTEM_PROMPT, /120자를 넘기지 않는다/);
+  assert.ok(buildUserPrompt("t", "x", "h").includes("[재요청] h")); assert.ok(!buildUserPrompt("t", "x").includes("[재요청]"));
+});
+
+test("UT-19 휴지통(trashed) 글은 AI를 호출하지 않고 저장도 하지 않는다", async () => {
+  let n = 0; const s = fakeStore([{ ...post("a"), trashed: true }, post("b")]);
+  const r = await processPending({ store: s, callAi: async () => { n++; return OK; }, today: "d" });
+  assert.equal(n, 1); assert.equal(r.ready, 1); assert.equal(s.saved.a, undefined); assert.equal(s.saved.b.aiStatus, "ready");
+});
