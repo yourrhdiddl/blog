@@ -1,7 +1,7 @@
 // 단위 테스트: node --test scripts/
 import test from "node:test";
 import assert from "node:assert/strict";
-import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, callGemini, PROVIDERS, buildUserPrompt, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
+import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, callGemini, PROVIDERS, makeCallAi, buildUserPrompt, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
 
 const OK = JSON.stringify({ summary: "프롬프트의 네 요소를 정리했다.", tags: ["프롬프트", "#실습", "프롬프트"], titles: ["좋은 질문의 4요소", "프롬프트 기초", "역할·맥락·요청·형식"] });
 
@@ -157,4 +157,41 @@ test("UT-19 휴지통(trashed) 글은 AI를 호출하지 않고 저장도 하지
   let n = 0; const s = fakeStore([{ ...post("a"), trashed: true }, post("b")]);
   const r = await processPending({ store: s, callAi: async () => { n++; return OK; }, today: "d" });
   assert.equal(n, 1); assert.equal(r.ready, 1); assert.equal(s.saved.a, undefined); assert.equal(s.saved.b.aiStatus, "ready");
+});
+
+// 제공자 자동 복귀(결정 #56)
+const okJson = JSON.stringify({ summary: "요약 한 줄", tags: ["a", "b", "c"], titles: ["제목1", "제목2", "제목3"] });
+const mkFetch = (plan, calls) => async url => {
+  const host = new URL(url).host; calls.push(host);
+  const r = plan[host]; if (r === "ok") return { ok: true, status: 200, json: async () => host.includes("anthropic") ? { content: [{ type: "text", text: okJson }] } : { candidates: [{ content: { parts: [{ text: okJson }] } }] } };
+  return { ok: false, status: r, json: async () => ({}) };
+};
+test("UT-20 복귀: claude 가 401(만료)이면 같은 호출에서 Gemini 로 돌아가고 이후에도 Gemini 를 쓴다", async () => {
+  const calls = [], logs = [];
+  const ai = makeCallAi({ env: { AI_PROVIDER: "claude", ANTHROPIC_API_KEY: "k1", GEMINI_API_KEY: "k2" }, fetchImpl: mkFetch({ "api.anthropic.com": 401, "generativelanguage.googleapis.com": "ok" }, calls), log: m => logs.push(m) });
+  assert.equal(ai.provider(), "claude");
+  assert.ok(await ai.callAi({ title: "t", text: "x" }));
+  assert.equal(ai.provider(), "gemini"); assert.equal(ai.model(), PROVIDERS.gemini.model);
+  await ai.callAi({ title: "t", text: "x" });
+  assert.deepEqual(calls, ["api.anthropic.com", "generativelanguage.googleapis.com", "generativelanguage.googleapis.com"]);
+  assert.ok(logs.some(m => /복귀/.test(m)) && !logs.join().includes("k1") && !logs.join().includes("k2"));
+});
+test("UT-21 복귀하지 않는 경우: 400(요청 문제)·AI_FALLBACK=off·Gemini 키 없음은 그대로 실패", async () => {
+  for (const [env, st] of [[{ AI_PROVIDER: "claude", ANTHROPIC_API_KEY: "k1", GEMINI_API_KEY: "k2" }, 400], [{ AI_PROVIDER: "claude", ANTHROPIC_API_KEY: "k1", GEMINI_API_KEY: "k2", AI_FALLBACK: "off" }, 401], [{ AI_PROVIDER: "claude", ANTHROPIC_API_KEY: "k1" }, 401]]) {
+    const calls = []; const ai = makeCallAi({ env, fetchImpl: mkFetch({ "api.anthropic.com": st }, calls) });
+    await assert.rejects(() => ai.callAi({ title: "t", text: "x" }), e => e.status === st);
+    assert.deepEqual(calls, ["api.anthropic.com"]);
+  }
+});
+test("UT-22 Claude 키가 없으면 Gemini 로 시작, 둘 다 없으면 오류, 기본(gemini)은 그대로", async () => {
+  const calls = [];
+  const a = makeCallAi({ env: { AI_PROVIDER: "claude", GEMINI_API_KEY: "k2" }, fetchImpl: mkFetch({ "generativelanguage.googleapis.com": "ok" }, calls) });
+  assert.equal(a.provider(), "gemini"); await a.callAi({ title: "t", text: "x" });
+  assert.throws(() => makeCallAi({ env: { AI_PROVIDER: "claude" } }), /ANTHROPIC_API_KEY/);
+  assert.throws(() => makeCallAi({ env: {} }), /GEMINI_API_KEY/);
+  assert.equal(makeCallAi({ env: { GEMINI_API_KEY: "k" } }).provider(), "gemini");
+});
+test("UT-23 AI_MODEL 은 선택한 제공자에만 적용되고, 복귀하면 Gemini 기본 모델을 쓴다", async () => {
+  const ai = makeCallAi({ env: { AI_PROVIDER: "claude", AI_MODEL: "claude-x", ANTHROPIC_API_KEY: "k1", GEMINI_API_KEY: "k2" }, fetchImpl: mkFetch({ "api.anthropic.com": 429, "generativelanguage.googleapis.com": "ok" }, []) });
+  assert.equal(ai.model(), "claude-x"); await ai.callAi({ title: "t", text: "x" }); assert.equal(ai.model(), PROVIDERS.gemini.model);
 });
