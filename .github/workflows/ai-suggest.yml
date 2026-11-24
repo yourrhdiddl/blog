@@ -1,6 +1,7 @@
 name: ai-suggest
 # 관리자가 저장한 글(aiStatus=pending)에 요약·태그·제목 후보를 만들어 ai* 필드에만 저장한다. (결정 #27, #28)
-# 필요한 Secrets: ANTHROPIC_API_KEY, FIREBASE_SERVICE_ACCOUNT (저장소 Settings > Secrets and variables > Actions)
+# 필요한 Secrets: GEMINI_API_KEY(기본) 또는 ANTHROPIC_API_KEY(AI_PROVIDER=claude), FIREBASE_SERVICE_ACCOUNT (저장소 Settings > Secrets and variables > Actions)
+# 제공자 선택: Settings > Secrets and variables > Actions > Variables 탭의 AI_PROVIDER (gemini 기본 | claude). 결정 #48
 # 수동 실행(Run workflow)에서 mode=baseline 을 고르면 AI 도입 전 기준값(요약 자동 대체 비율 등)만 측정한다.
 on:
   schedule:
@@ -22,7 +23,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AI_PROVIDER: ${{ vars.AI_PROVIDER }}
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
       AI_MODEL: ${{ vars.AI_MODEL }}
       AI_DAILY_LIMIT: ${{ vars.AI_DAILY_LIMIT }}
@@ -33,9 +36,11 @@ jobs:
         run: |
           ok=yes
           [ -n "$FIREBASE_SERVICE_ACCOUNT" ] || ok=no
-          if [ "${{ inputs.mode }}" != "baseline" ] && [ -z "$ANTHROPIC_API_KEY" ]; then ok=no; fi
+          if [ "${{ inputs.mode }}" != "baseline" ]; then
+            if [ "${AI_PROVIDER:-gemini}" = "claude" ]; then [ -n "$ANTHROPIC_API_KEY" ] || ok=no; else [ -n "$GEMINI_API_KEY" ] || ok=no; fi
+          fi
           echo "ready=$ok" >> "$GITHUB_OUTPUT"
-          [ "$ok" = yes ] || echo "::notice::Secrets가 아직 없어 건너뜁니다 (ANTHROPIC_API_KEY, FIREBASE_SERVICE_ACCOUNT)"
+          [ "$ok" = yes ] || echo "::notice::Secrets가 아직 없어 건너뜁니다 (GEMINI_API_KEY 또는 ANTHROPIC_API_KEY, FIREBASE_SERVICE_ACCOUNT)"
       - uses: actions/setup-node@v4
         if: steps.chk.outputs.ready == 'yes'
         with:
