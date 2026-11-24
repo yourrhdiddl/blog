@@ -106,7 +106,8 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   const d = await dbDoc(page, "rdy"), w = await page.evaluate(() => window.__writes);
   check("UI-05", "기본 반영: 요약·태그가 제안으로 바뀌고 제목은 그대로", d.summary === SUG.summary && d.tags.join() === SUG.tags.join() && d.title === "글 rdy");
   check("UI-06", "반영 시 aiStatus=applied, aiFeedback=accepted/accepted/ignored", d.aiStatus === "applied" && d.aiFeedback.summary === "accepted" && d.aiFeedback.tags === "accepted" && d.aiFeedback.title === "ignored", JSON.stringify(d.aiFeedback));
-  check("UI-07", "수정 요청은 허용된 필드만 쓴다", w.length === 1 && w[0].keys.every(k => ["title", "summary", "tags", "aiStatus", "aiFeedback", "aiAppliedAt"].includes(k)), w[0] && w[0].keys.join(","));
+  check("UI-07", "수정 요청은 허용된 필드만 쓴다", w.length === 1 && w[0].keys.every(k => ["title", "summary", "tags", "summaryAuto", "aiStatus", "aiFeedback", "aiAppliedAt"].includes(k)), w[0] && w[0].keys.join(","));
+  check("UI-31", "요약을 반영하면 summaryAuto=false로 바뀐다(수락률·비움 비율 집계 보정)", d.summaryAuto === false, String(d.summaryAuto));
   await page.screenshot({ path: path.join(OUT, "05_반영후.png"), clip: { x: 0, y: 0, width: 1100, height: 600 } });
   await ctx.close();
 }
