@@ -195,3 +195,11 @@ test("UT-23 AI_MODEL 은 선택한 제공자에만 적용되고, 복귀하면 Ge
   const ai = makeCallAi({ env: { AI_PROVIDER: "claude", AI_MODEL: "claude-x", ANTHROPIC_API_KEY: "k1", GEMINI_API_KEY: "k2" }, fetchImpl: mkFetch({ "api.anthropic.com": 429, "generativelanguage.googleapis.com": "ok" }, []) });
   assert.equal(ai.model(), "claude-x"); await ai.callAi({ title: "t", text: "x" }); assert.equal(ai.model(), PROVIDERS.gemini.model);
 });
+
+// Claude 응답 이상은 이유를 남긴다(결정 #57)
+test("UT-24 Claude 응답이 비었거나 길이 제한에서 잘리면 이유가 오류 문장에 남고(키·본문 없음), 정상 응답은 통과한다", async () => {
+  const mk = body => async () => ({ ok: true, status: 200, json: async () => body });
+  await assert.rejects(() => callClaude({ apiKey: "KEY123", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "max_tokens", content: [{ type: "thinking" }] }) }), e => /stop_reason=max_tokens/.test(e.message) && /thinking/.test(e.message) && !e.message.includes("KEY123"));
+  await assert.rejects(() => callClaude({ apiKey: "k", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "end_turn", content: [] }) }), /글자수=0/);
+  assert.equal(await callClaude({ apiKey: "k", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "end_turn", content: [{ type: "thinking" }, { type: "text", text: "{\"a\":1}" }] }) }), "{\"a\":1}");
+});
