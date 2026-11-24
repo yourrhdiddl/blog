@@ -10,7 +10,8 @@
 
 | 버전 | 문서 | 주요 변경 | 상태 |
 |---|---|---|---|
-| v0.9 | [PRD_AIPM복습노트_AI글정리도우미_v0.9_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.9_%ED%95%98%EB%8A%98_20261124.md) | delete 권한 실사이트 확인, v3.3·v3.4 UI 명세, 화면 점검 30건(라이트·다크), §15 미결 체크리스트 신설 | **최신** |
+| v1.0 | [PRD_AIPM복습노트_AI글정리도우미_v1.0_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.0_%ED%95%98%EB%8A%98_20261124.md) | 수락·무시 11편 결정 반영(수락률 77%), 비관리자 쓰기 차단·폰 사진 글 확인(하늘 보고), §15 갱신 | **최신** |
+| v0.9 | [PRD_AIPM복습노트_AI글정리도우미_v0.9_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.9_%ED%95%98%EB%8A%98_20261124.md) | delete 권한 실사이트 확인, v3.3·v3.4 UI 명세, 화면 점검 30건(라이트·다크), §15 미결 체크리스트 신설 | 이전 |
 | v0.8 | [PRD_AIPM복습노트_AI글정리도우미_v0.8_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.8_%ED%95%98%EB%8A%98_20261124.md) | 표본 확대 측정(추가 글 8편, 지시문 시험, 성공률 12건 기준) 반영, 5.1.1 신설 | 이전 |
 | v0.7 | [PRD_AIPM복습노트_AI글정리도우미_v0.7_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.7_%ED%95%98%EB%8A%98_20261124.md) | 실측(V1·H1·H2) 반영, 기능별 완료 기준, 데이터·상태·화면 명세, 기능↔테스트 매핑, 수정·휴지통·임시저장·상세 카드 편입 | 이전 |
 | v0.6 | [PRD_AIPM복습노트_AI글정리도우미_v0.6_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.6_%ED%95%98%EB%8A%98_20261124.md) | 최상단에 문서 목적 문구 추가 | 이전 |
@@ -52,6 +53,7 @@
 | 실패로그 | [실패로그_AIPM복습노트_문서4종네번째_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%EB%AC%B8%EC%84%9C4%EC%A2%85%EB%84%A4%EB%B2%88%EC%A7%B8_%ED%95%98%EB%8A%98_20261117.md) | |
 | 실패로그 | [실패로그_AIPM복습노트_붙여넣기잔여내용_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%EB%B6%99%EC%97%AC%EB%84%A3%EA%B8%B0%EC%9E%94%EC%97%AC%EB%82%B4%EC%9A%A9_%ED%95%98%EB%8A%98_20261117.md) | |
 | 실패로그 | [실패로그_AIPM복습노트_폼data-id_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%ED%8F%BCdata-id_%ED%95%98%EB%8A%98_20261117.md) | |
-| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.3_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.3_%ED%95%98%EB%8A%98_20261124.md) | **최신**, 표본 확대 8편·지시문 시험·화면 시험 30건 |
+| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.4_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.4_%ED%95%98%EB%8A%98_20261124.md) | **최신**, delete 확인·다크 30/30·수락률 77% 반영 |
+| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.3_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.3_%ED%95%98%EB%8A%98_20261124.md) | 이전, 표본 확대 8편·지시문 시험·화면 시험 30건 |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.2_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.2_%ED%95%98%EB%8A%98_20261124.md) | 이전, 실제 Gemini 실행·수락 결과, v3.2 화면 시험 |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.1_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.1_%ED%95%98%EB%8A%98_20261124.md) | 이전, 캡처 이미지는 docs/img 폴더 |
