@@ -1,7 +1,7 @@
 // 단위 테스트: node --test scripts/
 import test from "node:test";
 import assert from "node:assert/strict";
-import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, callGemini, PROVIDERS, makeCallAi, buildUserPrompt, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
+import { toPlainText, parseSuggest, processPending, assertAiOnly, baselineReport, callClaude, callGemini, PROVIDERS, makeCallAi, buildUserPrompt, dropSameTitles, SYSTEM_PROMPT, LIMITS, kstDate } from "./gen-ai.mjs";
 
 const OK = JSON.stringify({ summary: "프롬프트의 네 요소를 정리했다.", tags: ["프롬프트", "#실습", "프롬프트"], titles: ["좋은 질문의 4요소", "프롬프트 기초", "역할·맥락·요청·형식"] });
 
@@ -202,4 +202,15 @@ test("UT-24 Claude 응답이 비었거나 길이 제한에서 잘리면 이유�
   await assert.rejects(() => callClaude({ apiKey: "KEY123", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "max_tokens", content: [{ type: "thinking" }] }) }), e => /stop_reason=max_tokens/.test(e.message) && /thinking/.test(e.message) && !e.message.includes("KEY123"));
   await assert.rejects(() => callClaude({ apiKey: "k", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "end_turn", content: [] }) }), /글자수=0/);
   assert.equal(await callClaude({ apiKey: "k", model: "m", title: "t", text: "x", fetchImpl: mk({ stop_reason: "end_turn", content: [{ type: "thinking" }, { type: "text", text: "{\"a\":1}" }] }) }), "{\"a\":1}");
+});
+
+test("UT-25 제목 후보에서 원제와 같은 것(띄어쓰기·기호만 다름 포함)은 빼고, 전부 같으면 그대로 둔다", async () => {
+  assert.deepEqual(dropSameTitles(["A/B 테스트 설계", "AB 테스트 설계", "실험으로 배우는 설계", "다른 제목"], "A/B 테스트 설계"), ["실험으로 배우는 설계", "다른 제목"]);
+  assert.deepEqual(dropSameTitles(["제목1"], "제목1"), ["제목1"]);
+  assert.deepEqual(dropSameTitles(["가", "나"], ""), ["가", "나"]);
+  assert.match(SYSTEM_PROMPT, /원래 제목과 같거나/);
+  const same = JSON.stringify({ summary: "요약", tags: ["a", "b", "c"], titles: ["제목x", "제목 x!", "새 제목"] });
+  const s = fakeStore([post("x")]);
+  await processPending({ store: s, callAi: async () => same, today: "2026-11-25", model: "m", now: () => "T" });
+  assert.deepEqual(s.saved.x.aiSuggest.titles, ["새 제목"]);
 });
