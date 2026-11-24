@@ -55,11 +55,14 @@ export async function callClaude({ apiKey, model, title, text, hint = "", fetchI
   const res = await fetchImpl("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-    body: JSON.stringify({ model, max_tokens: 600, system: SYSTEM_PROMPT, messages: [{ role: "user", content: buildUserPrompt(title, text, hint) }] })
+    body: JSON.stringify({ model, max_tokens: 2000, system: SYSTEM_PROMPT, messages: [{ role: "user", content: buildUserPrompt(title, text, hint) }] })
   });
   if (!res.ok) throw Object.assign(new Error(`AI 호출 실패 (HTTP ${res.status})`), { status: res.status });
   const j = await res.json();
-  return j?.content?.find(c => c.type === "text")?.text ?? "";
+  const out = (j?.content ?? []).filter(c => c.type === "text").map(c => c.text ?? "").join("");
+  // 글이 비었거나 길이 제한에서 잘린 응답은 이유를 남긴다(본문·키는 넣지 않음). 결정 #57
+  if (!out.trim() || (j?.stop_reason === "max_tokens" && !out.includes("}"))) throw new Error(`Claude 응답 이상 (stop_reason=${j?.stop_reason ?? "없음"}, 블록=${(j?.content ?? []).map(c => c.type).join(",") || "없음"}, 글자수=${out.length})`);
+  return out;
 }
 
 // Gemini API 호출(무료 키 가능). 키는 헤더로만 보내고 주소·오류 메시지에 넣지 않는다.
