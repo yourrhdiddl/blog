@@ -200,6 +200,21 @@ textarea{min-height:320px;resize:vertical}
 .lb button{position:absolute;min-width:44px;min-height:44px;border:1px solid #fff;border-radius:99px;background:transparent;color:#fff;font:700 20px var(--display);cursor:pointer}
 .lb button:hover{background:#fff;color:var(--ink)}
 .lb .x{top:16px;right:16px}.lb .pv{left:12px;top:50%}.lb .nx{right:12px;top:50%}
+/* 본문 사진 블록 (v2.2) */
+.ed figure.pf,.article .body figure.pf{position:relative;margin:1.4em 0;text-align:center}
+.ed figure.pf img,.article .body figure.pf img{display:inline-block;max-width:100%;height:auto;margin:0;border-radius:10px;border:1px solid var(--line)}
+.article .body figure.pf img{cursor:zoom-in}
+.ed figure.pf img{cursor:grab}
+.pf figcaption{margin-top:8px;font:500 13px/1.5 var(--display);color:var(--mute);text-align:center}
+.ed figure.pf figcaption{min-height:1.5em;outline:none;cursor:text}
+.ed figure.pf figcaption:empty:before{content:attr(data-ph);color:var(--g2)}
+.ed figure.pf.sel img{outline:3px solid var(--ink);outline-offset:2px}
+.ed figure.pf.dragging{opacity:.4}
+.phbar{display:none;position:absolute;top:8px;right:8px;gap:6px}
+.ed figure.pf.sel .phbar{display:flex}
+.phbar button{min-width:40px;min-height:40px;border:0;border-radius:99px;background:var(--ink);color:#fff;font:700 15px var(--display);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.ed .dropb{box-shadow:0 -3px 0 var(--ink)}
+.ed.drope{box-shadow:inset 0 -3px 0 var(--ink)}
 .fab{position:fixed;right:20px;bottom:20px;min-height:52px;padding:0 22px;border-radius:99px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font:600 13px var(--display);z-index:10;max-width:calc(100vw - 32px);text-align:center}
 footer{padding:50px 0 80px;color:var(--mute);font-size:13px;border-top:1px solid var(--line);margin-top:40px}
@@ -255,7 +270,7 @@ nav a.hide-m{display:none}
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v2.1 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v2.2 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
 <button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
 
 <script type="module">
@@ -353,7 +368,7 @@ function block(b){const[k,v]=b;
   if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;if(k==="html")return v;return"";}
 function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 
-const OKT={P:1,DIV:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,FONT:1,IMG:1,A:1};
+const OKT={P:1,DIV:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,FONT:1,IMG:1,A:1,FIGURE:1,FIGCAPTION:1};
 const BADT=/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META|SVG|MATH|FORM|INPUT|TEXTAREA|BUTTON|SELECT|TEMPLATE|NOSCRIPT)$/;
 function clean(h){
   const doc=new DOMParser().parseFromString("<body>"+h,"text/html");
@@ -371,6 +386,8 @@ function clean(h){
     if(t==="IMG"){const src=c.getAttribute("src")||"";
       if(!/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/.test(src)){c.remove();return;}
       keep.src=src;keep.alt=(c.getAttribute("alt")||"").slice(0,200);keep.loading="lazy";}
+    if(t==="FIGURE"){if(!c.querySelector("img")){c.remove();return;}keep.class="pf";}
+    if(t==="FIGCAPTION"&&!c.textContent.trim()){c.remove();return;}
     if(t==="A"){const href=c.getAttribute("href")||"";
       if(!/^https?:\/\//i.test(href)){c.replaceWith(...c.childNodes);return;}
       keep.href=href;keep.target="_blank";keep.rel="noopener noreferrer";}
@@ -392,24 +409,65 @@ document.addEventListener("selectionchange",()=>{const ed=document.getElementByI
 function edFocus(){const ed=$("#ed"),cur=getSelection();const inside=cur.rangeCount&&ed.contains(cur.anchorNode)&&ed.contains(cur.focusNode);ed.focus();if(inside){}else if(savedRange){const s=getSelection();s.removeAllRanges();s.addRange(savedRange);}
   else{const r=document.createRange();r.selectNodeContents(ed);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);}}
 function edCmd(cmd,val){edFocus();document.execCommand("styleWithCSS",false,false);document.execCommand(cmd,false,val);}
-async function edImage(file){
-  if(!file||!/^image\//.test(file.type))return toast("이미지 파일만 넣을 수 있어요");
-  try{const url=await resizeImg(file);edFocus();getSelection().collapseToEnd();document.execCommand("insertImage",false,url);
-    const kb=Math.round($("#ed").innerHTML.length/1024);if(kb>800)toast("이미지가 많아요("+kb+"KB). 1MB가 넘으면 저장이 안 돼요");}
-  catch(e){toast("이미지를 불러오지 못했어요");}
+function newP(){const p=document.createElement("p");p.innerHTML="<br>";return p;}
+function phFigure(url){const f=document.createElement("figure");f.className="pf";f.contentEditable="false";
+  const im=new Image();im.src=url;im.alt="";im.draggable=true;
+  const bar=document.createElement("span");bar.className="phbar";bar.contentEditable="false";
+  [["up","↑","위로 옮기기"],["down","↓","아래로 옮기기"],["del","✕","사진 지우기"]].forEach(([k,t,l])=>{const b=document.createElement("button");b.type="button";b.dataset.ph=k;b.textContent=t;b.setAttribute("aria-label",l);bar.appendChild(b);});
+  const c=document.createElement("figcaption");c.contentEditable="true";c.dataset.ph="사진 설명을 입력하세요";
+  f.append(im,bar,c);return f;}
+function setCaret(n,end){const ed=$("#ed");ed.focus();const r=document.createRange();r.selectNodeContents(n);r.collapse(!end);const s=getSelection();s.removeAllRanges();s.addRange(r);}
+function hasMedia(n){return !!(n.textContent.trim()||(n.querySelector&&n.querySelector("img,figure")));}
+function insertFig(url){
+  const ed=$("#ed");edFocus();const s=getSelection();
+  let r=s.rangeCount?s.getRangeAt(0):null;
+  if(!r||!ed.contains(r.startContainer)){r=document.createRange();r.selectNodeContents(ed);r.collapse(false);}
+  let blk=null;
+  if(r.startContainer===ed)blk=ed.lastChild;
+  else{blk=r.startContainer;while(blk&&blk.parentNode!==ed)blk=blk.parentNode;}
+  if(blk&&blk.nodeType===3){const p=document.createElement("p");blk.replaceWith(p);p.append(blk);blk=p;}
+  const fig=phFigure(url);let tail=newP();
+  if(!blk){ed.append(fig,tail);}
+  else if(blk.tagName==="FIGURE"||!/^(P|DIV)$/.test(blk.tagName)){blk.after(fig,tail);}
+  else{
+    const tr=document.createRange();tr.setStart(r.startContainer,r.startOffset);tr.setEnd(blk,blk.childNodes.length);
+    const frag=tr.extractContents();
+    if(hasMedia(frag)){tail=document.createElement(blk.tagName);tail.append(frag);}
+    const headEmpty=!hasMedia(blk);
+    blk.after(fig,tail);
+    if(headEmpty)blk.remove();
+  }
+  setCaret(tail);fig.scrollIntoView({block:"nearest"});return fig;
 }
+async function edImages(files){
+  const fs=files.filter(f=>/^image\//.test(f.type));
+  if(!fs.length)return toast("이미지 파일만 넣을 수 있어요");
+  const urls=await Promise.all(fs.map(f=>resizeImg(f).catch(()=>null)));
+  const ok=urls.filter(Boolean);
+  ok.forEach(insertFig);
+  if(ok.length<fs.length)toast("사진 "+(fs.length-ok.length)+"장을 불러오지 못했어요");
+  updMeter();
+}
+let selFig=null,dragFig=null,meterT=0;
+function clearSel(){document.querySelectorAll("#ed figure.pf.sel").forEach(f=>f.classList.remove("sel"));selFig=null;}
+function delFig(f){const n=f.nextElementSibling||f.previousElementSibling;f.remove();selFig=null;if(n&&n.tagName!=="FIGURE")setCaret(n);updMeter();}
+function moveFig(f,d){const ed=$("#ed");
+  if(d<0){const p=f.previousElementSibling;if(p)ed.insertBefore(f,p);}
+  else{const n=f.nextElementSibling;if(n)n.after(f);}
+  if(!f.nextElementSibling)f.after(newP());
+  f.scrollIntoView({block:"nearest"});updMeter();}
+function updMeter(){clearTimeout(meterT);meterT=setTimeout(()=>{const ed=$("#ed"),m=$("#edMeter");if(!ed||!m)return;
+  const n=ed.querySelectorAll("figure.pf").length,kb=Math.round((new Blob([clean(ed.innerHTML)]).size+coverData.length)/1024);
+  m.textContent=`사진 ${n}장 · 글 전체 약 ${kb}KB / 900KB`+(kb>800?" · 거의 찼어요. 사진을 줄이거나 지워 주세요":"");
+  m.style.color=kb>900?"var(--danger)":"";},250);}
 const COVER_RE=/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/;
 function firstImg(h){const m=h.match(/<img [^>]*src="([^"]+)"/);const u=m?m[1].replace(/&amp;/g,"&"):"";return COVER_RE.test(u)?u:"";}
 let coverData="";
-const MAXPH=8;let photoData=[],curPhotos=[],phList=[],lb=null,lbList=[],lbI=0,lbTrigger=null;
+const MAXPH=8;let curPhotos=[],phList=[],lb=null,lbList=[],lbI=0,lbTrigger=null;
 const qa=s=>String(s).replace(/"/g,"&quot;");
 function allPhotos(){const out=[];all().forEach(p=>{if(q&&!(p.t+p.s).includes(q))return;const seen=new Set();
-  [...(p.photos||[]),...(p.own?[p.cover]:[])].forEach(u=>{if(u&&!seen.has(u)){seen.add(u);out.push({u,id:p.id,t:p.t,d:p.d,v:p.v});}});});return out;}
-function setPhotos(){const pv=$("#photoPrev");if(!pv)return;
-  pv.innerHTML=photoData.map((u,i)=>`<div class="pp"><img src="${u}" alt=""><button type="button" class="ppx" data-pdel="${i}" aria-label="사진 ${i+1} 지우기">✕</button></div>`).join("");
-  const kb=Math.round(photoData.join("").length/1024);
-  $("#photoInfo").textContent=photoData.length?`사진 ${photoData.length}/${MAXPH}장 · 약 ${kb}KB (글 전체 한도 약 900KB)`:`아직 고른 사진이 없어요 (최대 ${MAXPH}장)`;
-  $("#photoClear").hidden=!photoData.length;}
+  const bodyImgs=[];(p.body||[]).forEach(b=>{if(b[0]==="html")for(const m of String(b[1]).matchAll(/<img [^>]*?src="([^"]+)"/g)){const u=m[1].replace(/&amp;/g,"&");if(COVER_RE.test(u))bodyImgs.push(u);}});
+  [...bodyImgs,...(p.photos||[]),...(p.own?[p.cover]:[])].forEach(u=>{if(u&&!seen.has(u)){seen.add(u);out.push({u,id:p.id,t:p.t,d:p.d,v:p.v});}});});return out;}
 function drawLb(){const x=lbList[lbI];
   lb.innerHTML=`<button type="button" class="x" aria-label="닫기">✕</button>${lbList.length>1?`<button type="button" class="pv" aria-label="이전 사진">‹</button><button type="button" class="nx" aria-label="다음 사진">›</button>`:""}<img src="${x.u}" alt=""><div class="lbcap">${x.t?`<a href="#/post/${x.id}" data-id="${x.id}">${x.v==="private"?"🔒 ":""}${x.t}</a> · `:""}${lbI+1} / ${lbList.length}</div>`;}
 function openLb(list,i,trigger){lbList=list;lbI=i;lbTrigger=trigger||null;
@@ -422,6 +480,8 @@ document.addEventListener("click",e=>{
     if(b){if(b.classList.contains("x"))closeLb();else moveLb(b.classList.contains("pv")?-1:1);return;}
     if(e.target.closest(".lb a")){closeLb();return;}
     if(!e.target.closest(".lb img,.lbcap"))closeLb();return;}
+  const bi=e.target.closest(".article .body img");
+  if(bi){const imgs=[...document.querySelectorAll(".article .body img")];openLb(imgs.map(im=>({u:im.src,id:"",t:""})),imgs.indexOf(bi),bi);return;}
   const pi=e.target.closest("[data-pi]");if(pi){openLb(phList,+pi.dataset.pi,pi);return;}
   const gi=e.target.closest("[data-gi]");if(gi)openLb(curPhotos,+gi.dataset.gi,gi);
 });
@@ -525,10 +585,6 @@ function renderWrite(id){
     <div class="coverbox"><div id="coverPrev" class="thumb ph c0">대표 이미지 없음</div>
      <div class="row"><button type="button" class="btn" id="coverBtn">대표 이미지 고르기</button><button type="button" class="btn" id="coverDel" hidden>지우기</button></div>
      <input type="file" id="coverFile" accept="image/*" hidden></div></div>
-   <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">사진 갤러리 <small style="font-weight:500">선택 · 여러 장 가능(최대 8장). 글 맨 아래와 목록의 '사진' 탭에 보여요.</small></div>
-    <div class="row"><button type="button" class="btn" id="photoBtn">사진 여러 장 고르기</button><button type="button" class="btn" id="photoClear" hidden>모두 지우기</button></div>
-    <input type="file" id="photoFile" accept="image/*" multiple hidden>
-    <div id="photoPrev" class="pprev" aria-live="polite"></div><div id="photoInfo" class="edhint" style="margin-top:6px"></div></div>
    <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">내용</div>
     <div class="tb" role="toolbar" aria-label="글 서식">
      <button type="button" class="tbb" data-cmd="bold" title="굵게" aria-label="굵게"><b>B</b></button>
@@ -551,43 +607,58 @@ function renderWrite(id){
      <button type="button" class="tbb" data-cmd="insertUnorderedList" title="목록">• 목록</button>
      <button type="button" class="tbb" data-cmd="removeFormat" title="서식 지우기">서식 지움</button>
      <span class="sep"></span>
-     <button type="button" class="tbb" id="imgBtn" title="이미지 넣기">🖼 이미지</button>
-     <input type="file" id="imgFile" accept="image/*" hidden>
+     <button type="button" class="tbb" id="imgBtn" title="사진 넣기 (여러 장 가능)">🖼 사진</button>
+     <input type="file" id="imgFile" accept="image/*" multiple hidden>
     </div>
-    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 이미지는 끌어다 놓거나 붙여넣어도 돼요."></div>
-    <div class="edhint" style="margin-top:6px">이미지는 가로 900px로 줄여서 글에 함께 저장돼요. 글 한 편은 합쳐서 약 1MB까지예요.</div></div>
+    <div class="ed" id="ed" contenteditable="true" role="textbox" aria-multiline="true" aria-label="글 내용" data-ph="내용을 입력하세요. 사진은 위의 🖼 사진 버튼으로 넣거나, 끌어다 놓거나, 붙여넣어도 돼요."></div>
+    <div class="edhint" style="margin-top:6px">사진은 가로 900px로 줄여서 글에 함께 저장돼요. 사진을 누르면 ↑ ↓ ✕ 버튼이 나오고, 끌어서 순서를 바꿀 수 있어요.</div><div id="edMeter" class="edhint" style="margin-top:4px" aria-live="polite"></div></div>
    <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
   initEditor();
 }
 
 function initEditor(){
-  const ed=$("#ed");savedRange=null;coverData="";photoData=[];if(!ed)return;setPhotos();
+  const ed=$("#ed");savedRange=null;coverData="";if(!ed)return;
   $("#coverBtn").onclick=()=>$("#coverFile").click();
   $("#coverDel").onclick=()=>{coverData="";setCover();};
   $("#coverFile").onchange=async e=>{const f=e.target.files[0];e.target.value="";
     if(!f||!/^image\//.test(f.type))return toast("이미지 파일만 고를 수 있어요");
     try{coverData=await resizeImg(f,720);setCover();}catch(x){toast("이미지를 불러오지 못했어요");}};
-  $("#photoBtn").onclick=()=>$("#photoFile").click();
-  $("#photoFile").onchange=async e=>{const fs=[...e.target.files].filter(f=>/^image\//.test(f.type));e.target.value="";
-    if(!fs.length)return toast("이미지 파일만 고를 수 있어요");
-    let skip=0,fail=0;
-    for(const f of fs){if(photoData.length>=MAXPH){skip++;continue;}
-      try{photoData.push(await resizeImg(f,800,0.7));}catch(x){fail++;}}
-    setPhotos();
-    if(skip)toast("최대 "+MAXPH+"장까지예요. "+skip+"장은 넣지 못했어요");else if(fail)toast("사진 "+fail+"장을 불러오지 못했어요");};
-  $("#photoPrev").onclick=e=>{const b=e.target.closest("[data-pdel]");if(!b)return;photoData.splice(+b.dataset.pdel,1);setPhotos();};
-  $("#photoClear").onclick=()=>{photoData=[];setPhotos();};
   document.execCommand("defaultParagraphSeparator",false,"p");
   document.querySelectorAll(".tb [data-cmd],.tb [data-color],#imgBtn").forEach(b=>b.addEventListener("mousedown",e=>e.preventDefault()));
   document.querySelectorAll(".tb [data-cmd]").forEach(b=>b.onclick=()=>edCmd(b.dataset.cmd,b.dataset.val));
   document.querySelectorAll(".tb [data-color]").forEach(b=>b.onclick=()=>edCmd("foreColor",b.dataset.color));
   $("#szSel").onchange=e=>{if(e.target.value)edCmd("fontSize",e.target.value);e.target.value="";};
   $("#imgBtn").onclick=()=>$("#imgFile").click();
-  $("#imgFile").onchange=e=>{[...e.target.files].forEach(edImage);e.target.value="";};
+  $("#imgFile").onchange=e=>{const fs=[...e.target.files];e.target.value="";edImages(fs);};
   ed.addEventListener("paste",e=>{e.preventDefault();const fs=[...(e.clipboardData?.files||[])].filter(f=>/^image\//.test(f.type));
-    if(fs.length)fs.forEach(edImage);else{const t=e.clipboardData?.getData("text/plain")||"";if(t)document.execCommand("insertText",false,t);}});
-  ed.addEventListener("drop",e=>{const fs=[...(e.dataTransfer?.files||[])].filter(f=>/^image\//.test(f.type));
-    if(fs.length){e.preventDefault();fs.forEach(edImage);}});
+    if(fs.length)edImages(fs);else{const t=e.clipboardData?.getData("text/plain")||"";if(t)document.execCommand("insertText",false,t);updMeter();}});
+  ed.addEventListener("dragstart",e=>{const im=e.target.closest&&e.target.closest("figure.pf img");if(!im)return;
+    dragFig=im.closest("figure.pf");clearSel();dragFig.classList.add("dragging");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","");});
+  const dropTarget=y=>{const kids=[...ed.children].filter(k=>k!==dragFig);for(const k of kids){const r=k.getBoundingClientRect();if(y<r.top+r.height/2)return k;}return null;};
+  const clearDrop=()=>{ed.querySelectorAll(".dropb").forEach(k=>k.classList.remove("dropb"));ed.classList.remove("drope");};
+  ed.addEventListener("dragover",e=>{if(!dragFig)return;e.preventDefault();clearDrop();const t=dropTarget(e.clientY);if(t)t.classList.add("dropb");else ed.classList.add("drope");});
+  ed.addEventListener("dragend",()=>{if(dragFig)dragFig.classList.remove("dragging");dragFig=null;clearDrop();});
+  ed.addEventListener("drop",e=>{
+    if(dragFig){e.preventDefault();const t=dropTarget(e.clientY),f=dragFig;clearDrop();f.classList.remove("dragging");dragFig=null;
+      if(t)ed.insertBefore(f,t);else ed.append(f);if(!f.nextElementSibling)f.after(newP());updMeter();return;}
+    const fs=[...(e.dataTransfer?.files||[])].filter(f=>/^image\//.test(f.type));
+    if(fs.length){e.preventDefault();const r=document.caretRangeFromPoint&&document.caretRangeFromPoint(e.clientX,e.clientY);
+      if(r&&ed.contains(r.startContainer)){const sl=getSelection();sl.removeAllRanges();sl.addRange(r);savedRange=r.cloneRange();}
+      edImages(fs);}});
+  ed.addEventListener("mousedown",e=>{
+    if(e.target.closest(".phbar")){e.preventDefault();return;}
+    const f=e.target.closest("figure.pf");clearSel();
+    if(f&&!e.target.closest("figcaption")){f.classList.add("sel");selFig=f;}});
+  ed.addEventListener("click",e=>{const b=e.target.closest(".phbar button");if(!b)return;e.preventDefault();
+    const f=b.closest("figure.pf");if(b.dataset.ph==="del")delFig(f);else moveFig(f,b.dataset.ph==="up"?-1:1);});
+  ed.addEventListener("keydown",e=>{
+    const cap=e.target.closest&&e.target.closest("figcaption");
+    if(cap&&e.key==="Enter"){e.preventDefault();const f=cap.closest("figure.pf");let n=f.nextElementSibling;if(!n||n.tagName==="FIGURE"){n=newP();f.after(n);}setCaret(n);return;}
+    if(selFig&&!cap&&(e.key==="Delete"||e.key==="Backspace")){e.preventDefault();delFig(selFig);return;}
+    if(selFig&&!cap&&e.key.length===1)clearSel();});
+  ed.addEventListener("input",updMeter);
+  updMeter();
+
 }
 function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
 function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
@@ -683,12 +754,12 @@ document.addEventListener("submit",async e=>{
   const btn=$("#pubBtn");btn.disabled=true;btn.textContent="저장 중…";
   const tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
   const content=clean($("#ed").innerHTML).trim();
-  const plain=strip(content).replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
+  const plain=strip(content.replace(/<figcaption>[\s\S]*?<\/figcaption>/g,"")).replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
   if(!plain&&!/<img /.test(content)){btn.disabled=false;btn.textContent="발행하기";return toast("내용을 입력해 주세요");}
-  if(new Blob([content]).size+coverData.length+photoData.join("").length>950000){btn.disabled=false;btn.textContent="발행하기";return toast("글이 너무 커요. 사진 수를 줄이거나 본문 이미지를 줄여 주세요");}
+  if(new Blob([content]).size+coverData.length>950000){btn.disabled=false;btn.textContent="발행하기";return toast("글이 너무 커요. 사진 수를 줄여 주세요");}
   const summary=d.get("s").trim()||plain.slice(0,60);
   try{
-    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,photos:photoData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
+    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
     await loadRemote();toast("발행했어요");show("post",ref.id,true);
   }catch(err){
     console.error(err);btn.disabled=false;btn.textContent="발행하기";
