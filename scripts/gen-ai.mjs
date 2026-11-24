@@ -57,7 +57,7 @@ export async function callClaude({ apiKey, model, title, text, hint = "", fetchI
     headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model, max_tokens: 600, system: SYSTEM_PROMPT, messages: [{ role: "user", content: buildUserPrompt(title, text, hint) }] })
   });
-  if (!res.ok) throw new Error(`AI 호출 실패 (HTTP ${res.status})`);
+  if (!res.ok) throw Object.assign(new Error(`AI 호출 실패 (HTTP ${res.status})`), { status: res.status });
   const j = await res.json();
   return j?.content?.find(c => c.type === "text")?.text ?? "";
 }
@@ -73,7 +73,7 @@ export async function callGemini({ apiKey, model, title, text, hint = "", fetchI
       generationConfig: { maxOutputTokens: 2000, temperature: 0.3, responseMimeType: "application/json" }
     })
   });
-  if (!res.ok) throw new Error(`AI 호출 실패 (HTTP ${res.status})`);
+  if (!res.ok) throw Object.assign(new Error(`AI 호출 실패 (HTTP ${res.status})`), { status: res.status });
   const j = await res.json();
   return (j?.candidates?.[0]?.content?.parts ?? []).map(p => p.text ?? "").join("");
 }
@@ -83,6 +83,31 @@ export const PROVIDERS = {
   gemini: { keyEnv: "GEMINI_API_KEY", model: "gemini-3.5-flash-lite", call: callGemini },
   claude: { keyEnv: "ANTHROPIC_API_KEY", model: "claude-sonnet-5-5", call: callClaude }
 };
+
+// 제공자 선택 + 자동 복귀(결정 #56): AI_PROVIDER=claude 인데 키가 없거나 호출이 인증·결제·한도 문제로 실패하면
+// 같은 실행 안에서 Gemini 로 돌아간다. 글 내용 문제(응답 형식 오류)는 복귀 사유가 아니다. AI_FALLBACK=off 면 복귀하지 않는다.
+export const FALLBACK_STATUS = [401, 402, 403, 429, 529];
+export function makeCallAi({ env = process.env, fetchImpl = fetch, log = () => {} } = {}) {
+  const want = env.AI_PROVIDER || "gemini";
+  if (!PROVIDERS[want]) throw new Error("AI_PROVIDER 는 gemini 또는 claude 여야 함");
+  const canFallback = want !== "gemini" && env.AI_FALLBACK !== "off" && !!env[PROVIDERS.gemini.keyEnv];
+  let name = want;
+  if (!env[PROVIDERS[name].keyEnv]) {
+    if (!canFallback) throw new Error(PROVIDERS[name].keyEnv + " 가 설정되지 않음");
+    log(`${PROVIDERS[name].keyEnv} 없음 → Gemini 사용`); name = "gemini";
+  }
+  const modelOf = n => (n === want && env.AI_MODEL) || PROVIDERS[n].model;
+  const callAi = async ({ title, text, hint }) => {
+    const run = n => PROVIDERS[n].call({ apiKey: env[PROVIDERS[n].keyEnv], model: modelOf(n), title, text, hint, fetchImpl });
+    try { return await run(name); }
+    catch (e) {
+      if (name !== want || !canFallback || !FALLBACK_STATUS.includes(e.status)) throw e;
+      log(`${name} 호출 실패(HTTP ${e.status}) → Gemini 로 복귀`); name = "gemini";
+      return run(name);
+    }
+  };
+  return { callAi, model: () => modelOf(name), provider: () => name };
+}
 
 // ai* 이외 필드를 쓰려 하면 막는다(결정 #28)
 export function assertAiOnly(patch) {
@@ -121,7 +146,7 @@ export async function processPending({ store, callAi, model = "", limit = LIMITS
       catch (e) { err = String(e.message || e).slice(0, 200); }
     }
     if (value) {
-      await store.saveResult(post.id, { aiStatus: "ready", aiSuggest: { ...value, model, at: now() }, aiError: null });
+      await store.saveResult(post.id, { aiStatus: "ready", aiSuggest: { ...value, model: typeof model === "function" ? model() : model, at: now() }, aiError: null });
       res.ready++;
     } else {
       await store.saveResult(post.id, { aiStatus: "failed", aiError: err });
@@ -181,14 +206,10 @@ async function main() {
     if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, rep.md + "\n");
     return;
   }
-  const provider = PROVIDERS[process.env.AI_PROVIDER || "gemini"];
-  if (!provider) throw new Error("AI_PROVIDER 는 gemini 또는 claude 여야 함");
-  const apiKey = process.env[provider.keyEnv];
-  if (!apiKey) throw new Error(provider.keyEnv + " 가 설정되지 않음");
-  const model = process.env.AI_MODEL || provider.model;
+  const ai = makeCallAi({ log: console.log });
   const limit = Number(process.env.AI_DAILY_LIMIT) || LIMITS.dailyDefault;
-  const res = await processPending({ store, callAi: ({ title, text, hint }) => provider.call({ apiKey, model, title, text, hint }), model, limit, log: console.log });
-  console.log(`결과: 대기 ${res.pending}, 성공 ${res.ready}, 실패 ${res.failed}, 보류(상한) ${res.skipped}, API 호출 ${res.calls}`);
+  const res = await processPending({ store, callAi: ai.callAi, model: ai.model, limit, log: console.log });
+  console.log(`결과: 대기 ${res.pending}, 성공 ${res.ready}, 실패 ${res.failed}, 보류(상한) ${res.skipped}, API 호출 ${res.calls}, 사용한 제공자 ${ai.provider()}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
