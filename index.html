@@ -323,6 +323,62 @@ footer .big{color:transparent;background:radial-gradient(circle,var(--mint2) 38%
 .ed figure.pf.sel:not(.g2):not(.g3) img,.ed figure.pf.sel img.cur{outline-color:var(--mint2)}
 .ed .dropb{box-shadow:0 -3px 0 var(--mint2)}.ed.drope{box-shadow:inset 0 -3px 0 var(--mint2)}
 .coverbox .thumb.ph::before{display:none}.coverbox .thumb.ph{background:var(--soft);color:var(--mute);font:600 14px var(--display)}
+/* ===== v3.1: 수정·휴지통 ===== */
+.adm{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 4px}
+.btn.sm{min-height:36px;padding:0 14px;font-size:.875rem}
+.trows{display:grid;gap:12px;margin-top:6px}
+.trow{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:18px 20px}
+.trow .meta{display:flex;gap:10px;align-items:center;color:var(--mute);font-size:.8125rem}
+.trow h2{font-size:1.0625rem;margin:8px 0 4px}.trow p{color:var(--mute);margin:0 0 12px}
+.trow .row{display:flex;gap:8px;flex-wrap:wrap}
+/* ===== v3.1: 가독성 개선 (결정 #52) ===== */
+/* 버튼: 검정 테두리 제거 → 옅은 테두리, 호버 때만 민트 */
+.btn{border:1.5px solid var(--line);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--mint2);background:var(--soft);color:var(--ink)}
+.btn.primary{border-color:transparent;background:var(--mint);color:var(--onmint)}.btn.primary:hover{background:var(--mint2);color:var(--onmint);border-color:transparent}
+.btn.danger{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 35%,var(--line));background:var(--card)}
+.btn.danger:hover{background:color-mix(in srgb,var(--danger) 9%,var(--card));border-color:var(--danger);color:var(--danger)}
+.fab{border:0;min-height:46px;padding:0 20px;right:16px;bottom:16px;font-size:.9375rem;box-shadow:0 6px 18px rgba(20,27,26,.2)}
+footer{padding-bottom:76px}
+/* 글 상세: 읽기 편한 폭·크기·간격 */
+.article{max-width:720px}
+.article h1{font-size:clamp(1.65rem,4vw,2.25rem);line-height:1.32;letter-spacing:-.025em}
+.article .lead{font-size:1.0625rem;line-height:1.7;color:var(--mute)}
+.article .body{font-size:1.125rem;line-height:1.95;letter-spacing:-.012em;color:var(--ink);word-break:keep-all;overflow-wrap:anywhere}
+.article .body p{margin:0 0 1.4em}
+.article .body h3{font-size:1.3rem;line-height:1.45;margin:2.3em 0 .75em;padding:2px 0 2px 14px;border:0;border-left:4px solid var(--mint2)}
+.article .body blockquote,.ed blockquote{background:var(--soft);border:0;border-left:4px solid var(--mint2);border-radius:0 12px 12px 0;padding:14px 20px;margin:1.6em 0;color:var(--ink-2);font-weight:500}
+.article .body ul,.article .body ol{margin:0 0 1.5em;padding-left:1.4em}.article .body li{margin:.45em 0;padding-left:.2em}.article .body li::marker{color:var(--mint2)}
+.article .tags span{font-size:.8125rem}
+.pn a{background:var(--card);border-color:var(--line)}.pn a:hover{border-color:var(--mint2)}
+/* 홈 상단 압축: 소개·추천·탭이 한 화면에 */
+.hero{padding-top:34px;padding-bottom:18px}
+.hero h1{font-size:clamp(1.75rem,3.8vw,2.5rem);line-height:1.25}
+.hero .lead{font-size:.9375rem;line-height:1.7}
+.picks{padding-top:18px}.note{padding:14px 16px;font-size:.9375rem;line-height:1.55}.note small{font-size:.8125rem}
+.bar{margin-top:30px}
+.tab{font-size:.9375rem}
+/* 글 카드: 제목·요약 크기와 줄 수 정리 */
+.post h2{font-size:1.125rem;line-height:1.4;letter-spacing:-.02em}
+.pbody{padding:18px 20px}
+.post p{font-size:.9375rem;line-height:1.65;color:var(--mute);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.post .meta,.trow .meta{font-size:.8125rem}
+.tags span{font-size:.8125rem}
+/* 글쓰기 화면: 구역 간격과 글자 크기 */
+#writeForm{display:grid;gap:26px}
+#writeForm>label{font-weight:700;font-size:.9375rem;color:var(--ink)}
+#writeForm>label small{display:block;margin:2px 0 8px;font-weight:500;font-size:.8125rem;color:var(--mute)}
+#writeForm input[type=text],#writeForm select{min-height:48px;font-size:1rem}
+#writeForm>label.aiopt{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:14px 16px;background:var(--soft);border:1.5px solid var(--line);border-radius:14px}
+#writeForm>label.aiopt small{grid-column:2;margin:0}
+#writeForm>label.aiopt input{width:18px;height:18px;margin:0}
+@media (prefers-color-scheme:dark){:root{--danger:#f0877b}}
+.toast{color:var(--paper)}
+.aib{border-color:var(--line)}.aib.on{background:var(--mint);color:var(--onmint);border-color:transparent}
+.edhint{font-size:.8125rem;line-height:1.6;color:var(--mute)}
+.ed{font-size:1.0625rem;line-height:1.85;min-height:340px}
+.card h1{font-size:1.6rem;letter-spacing:-.02em}
+@media (max-width:620px){.article .body{font-size:1.0625rem;line-height:1.9}.hero{padding-top:22px}.post p{-webkit-line-clamp:3}.fab{right:12px;bottom:12px}}
 </style>
 </head>
 <body>
@@ -350,6 +406,7 @@ footer .big{color:transparent;background:radial-gradient(circle,var(--mint2) 38%
         <button class="tab" role="tab" aria-selected="false" data-f="public">공개</button>
         <button class="tab" role="tab" aria-selected="false" data-f="private">나만보기</button>
         <button class="tab" role="tab" aria-selected="false" data-f="photos">사진</button>
+        <button class="tab" role="tab" aria-selected="false" data-f="trash" id="trashTab" hidden>휴지통</button>
       </div>
       <input class="search" id="q" type="search" placeholder="글 검색" aria-label="글 검색">
     </div>
@@ -361,13 +418,13 @@ footer .big{color:transparent;background:radial-gradient(circle,var(--mint2) 38%
  <div id="page" class="wrap" hidden style="max-width:680px"></div>
 </main>
 
-<footer><div class="wrap">© 2026 AIPM 복습 노트 · v3.0 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
-<button class="btn primary fab" id="writeBtn" data-go="write">✏️ 글쓰기</button>
+<footer><div class="wrap">© 2026 AIPM 복습 노트 · v3.1 · 방문 통계는 Google Analytics로 수집합니다<div class="big">AIPM</div></div></footer>
+<button class="btn primary fab" id="writeBtn" data-go="write">글쓰기</button>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, deleteField, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // Firebase 웹 설정값은 화면에 보여도 되는 값입니다. 데이터는 Firestore 보안 규칙이 지킵니다.
 const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
 const auth=getAuth(app),db=getFirestore(app);
@@ -425,7 +482,8 @@ const samples=[
 let remote=[],user=null,loadErr="";
 const $=s=>document.querySelector(s);
 let f="all",q="",loggedIn=false;
-const all=()=>samples.filter(p=>p.v==="public"||loggedIn).concat(remote).sort((a,b)=>b.key-a.key);
+const all=()=>samples.filter(p=>p.v==="public"||loggedIn).concat(remote.filter(p=>!p.trashed)).sort((a,b)=>b.key-a.key);
+const TRASH_DAYS=15,trashed=()=>remote.filter(p=>p.trashed).sort((a,b)=>b.tms-a.tms);
 const fmt=t=>{const d=new Date(t);return d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
 async function loadRemote(){
   loadErr="";
@@ -434,14 +492,47 @@ async function loadRemote(){
     const snap=await getDocs(loggedIn?ref:query(ref,where("visibility","==","public")));
     remote=snap.docs.map(x=>{const r=x.data(),ms=r.createdAt?r.createdAt.toMillis():Date.now();
       const html=r.contentFormat==="html"?clean(r.content||""):"",own=COVER_RE.test(r.cover||"")?r.cover:"";
-      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,photos:(Array.isArray(r.photos)?r.photos:[]).filter(u=>typeof u==="string"&&COVER_RE.test(u)).slice(0,MAXPH),pick:esc(r.title||""),aiStatus:r.aiStatus||"",aiError:r.aiError||"",aiSuggest:normAi(r.aiSuggest)};});
+      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,photos:(Array.isArray(r.photos)?r.photos:[]).filter(u=>typeof u==="string"&&COVER_RE.test(u)).slice(0,MAXPH),pick:esc(r.title||""),aiStatus:r.aiStatus||"",aiError:r.aiError||"",aiSuggest:normAi(r.aiSuggest),trashed:r.trashed===true,tms:r.trashedAt&&r.trashedAt.toMillis?r.trashedAt.toMillis():Date.now(),pv:r.prevVisibility==="public"?"public":"private",rhtml:html,sauto:r.summaryAuto===true};});
+    purgeOld();
   }catch(e){console.error(e);loadErr="글을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";remote=[];}
 }
+async function purgeOld(){ // 휴지통에 15일 넘게 있던 글을 영구삭제(관리자가 사이트를 열 때 실행)
+  if(!loggedIn)return;const now=Date.now(),old=remote.filter(p=>p.trashed&&now-p.tms>=TRASH_DAYS*864e5);if(!old.length)return;
+  const gone=new Set();
+  for(const p of old){try{await deleteDoc(doc(db,"posts",p.id));gone.add(p.id);}catch(e){console.error(e);}}
+  if(gone.size){remote=remote.filter(p=>!gone.has(p.id));toast("휴지통에서 "+TRASH_DAYS+"일이 지난 글 "+gone.size+"개를 영구삭제했어요");}
+}
+const daysLeft=p=>Math.max(0,Math.ceil((p.tms+TRASH_DAYS*864e5-Date.now())/864e5));
+let armKey="",armT=0;
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-act]");if(!b)return;e.preventDefault();
+  const id=b.dataset.pid,act=b.dataset.act,p=remote.find(x=>x.id===id);if(!p)return;
+  if(act==="edit")return show("edit",id,true);
+  if(act==="trash"||act==="purge"){
+    if(armKey!==act+id){armKey=act+id;const o=b.textContent;
+      b.textContent=act==="trash"?"한 번 더 누르면 휴지통으로":"한 번 더 누르면 영구삭제(되돌릴 수 없음)";
+      clearTimeout(armT);armT=setTimeout(()=>{armKey="";if(document.contains(b))b.textContent=o;},4000);return;}
+    armKey="";
+  }
+  b.disabled=true;
+  try{
+    if(act==="trash"){await updateDoc(doc(db,"posts",id),{trashed:true,trashedAt:serverTimestamp(),prevVisibility:p.v,visibility:"private"});
+      await loadRemote();toast("휴지통으로 보냈어요. "+TRASH_DAYS+"일 뒤 영구삭제돼요");show("home",0,true);}
+    else if(act==="restore"){await updateDoc(doc(db,"posts",id),{trashed:false,trashedAt:deleteField(),visibility:p.pv,prevVisibility:deleteField()});
+      await loadRemote();toast("글을 복구했어요 ("+(p.pv==="public"?"공개":"나만보기")+")");renderList();}
+    else if(act==="purge"){await deleteDoc(doc(db,"posts",id));await loadRemote();toast("영구삭제했어요");renderList();}
+  }catch(err){console.error(err);b.disabled=false;toast(err.code==="permission-denied"?"권한이 없어요. Firestore 규칙에서 관리자의 수정·삭제를 허용해야 해요":"처리하지 못했어요. 다시 시도해 주세요");}
+});
 const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
 function renderList(){
+  {const tt=$("#trashTab");if(tt)tt.textContent="휴지통"+(loggedIn&&trashed().length?" ("+trashed().length+")":"");}
   if(f==="photos"){const ph=allPhotos();phList=ph;$("#list").className="pgrid";
     $("#list").innerHTML=ph.length?ph.map((x,i)=>`<figure class="pitem"><button type="button" class="ptile" data-pi="${i}" aria-label="${qa(x.t)} 사진 크게 보기"><img src="${x.u}" alt="" loading="lazy"></button><figcaption>${x.v==="private"?"🔒 ":""}${x.t}<small>${x.d}</small></figcaption></figure>`).join("")
       :`<div class="empty">${loadErr||"아직 올린 사진이 없어요. 글을 쓸 때 '사진 갤러리'에서 사진을 올려 보세요."}</div>`;return;}
+  if(f==="trash"){const tl=trashed();$("#list").className="trows";
+    $("#list").innerHTML=tl.length?tl.map(p=>`<div class="trow"><div class="meta"><span class="badge ${p.pv==="public"?"pub":"priv"}">삭제 전 ${p.pv==="public"?"공개":"나만보기"}</span><time>${daysLeft(p)}일 뒤 영구삭제</time></div>
+      <h2>${p.t||"(제목 없음)"}</h2><p>${p.s}</p><div class="row"><button class="btn sm" type="button" data-act="restore" data-pid="${p.id}">복구</button><button class="btn sm danger" type="button" data-act="purge" data-pid="${p.id}">지금 영구삭제</button></div></div>`).join("")
+      :`<div class="empty">휴지통이 비어 있어요. 삭제한 글은 ${TRASH_DAYS}일 동안 여기에 보관돼요.</div>`;return;}
   const rows=all().filter(p=>(f==="all"||p.v===f)&&(!q||(p.t+p.s).includes(q))).slice();
   $("#list").className="gal";
   $("#list").innerHTML=rows.length?rows.map(p=>`<a class="post" href="#/post/${p.id}" data-id="${p.id}">${thumb(p)}<div class="pbody">
@@ -659,12 +750,13 @@ function renderDetail(id){
    ${p.own?`<img class="cover" src="${p.cover}" alt="">`:""}
    <div class="meta">${badge(p)}<time>${p.d}</time></div>
    <h1><span class="hl">${p.t}</span></h1>
+   ${loggedIn&&p.remote?`<div class="adm"><button class="btn sm" type="button" data-act="edit" data-pid="${p.id}">수정</button><button class="btn sm danger" type="button" data-act="trash" data-pid="${p.id}">휴지통으로 보내기</button></div>`:""}
    ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
    ${aiCard(p)}
    <div class="body">${p.body.map(block).join("")}</div>
    ${(p.photos||[]).length?`<section class="gallery" aria-label="사진 갤러리"><div class="gh">사진 ${p.photos.length}장</div><div class="pgrid">${p.photos.map((u,i)=>`<figure class="pitem"><button type="button" class="ptile" data-gi="${i}" aria-label="사진 ${i+1} 크게 보기"><img src="${u}" alt="" loading="lazy"></button></figure>`).join("")}</div></section>`:""}<div id="readEnd" style="height:1px"></div>
-   ${p.remote&&p.v==="public"?`<div class="row" style="margin-top:20px"><button class="btn" id="shareBtn" data-share="${p.id}" type="button">🔗 공유 링크 복사</button></div>`:""}
+   ${p.remote&&p.v==="public"?`<div class="row" style="margin-top:20px"><button class="btn" id="shareBtn" data-share="${p.id}" type="button">공유 링크 복사</button></div>`:""}
    <div class="pn">${pr?`<a href="#/post/${pr.id}" data-id="${pr.id}"><small>← 이전 글</small>${pr.t}</a>`:"<span></span>"}${nx?`<a href="#/post/${nx.id}" data-id="${nx.id}"><small>다음 글 →</small>${nx.t}</a>`:"<span></span>"}</div></article>`;
 }
 function renderLogin(){
@@ -674,16 +766,16 @@ function renderLogin(){
    <p id="loginMsg" style="margin-top:12px;color:var(--ink-3);font-size:.9375rem">비밀번호를 따로 만들지 않고 Google 계정으로 로그인해요.</p></div>`;
 }
 function renderWrite(id){
-  const p=null;
+  const p=id?remote.find(x=>x.id===id)||null:null;
   $("#page").innerHTML=`<button class="back" data-home>← 글 목록</button><div class="card" style="margin-top:8px"><h1>${p?"글 수정":"새 글 쓰기"}</h1>
    <form id="writeForm" data-pid="${p?p.id:""}">
    <label>제목<input name="t" type="text" placeholder="제목을 입력하세요" value="${p?p.t.replace(/"/g,"&quot;"):""}" required></label>
    <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">공개 설정</div><div class="radios">
      <label><input type="radio" name="v" value="public" ${!p||p.v==="public"?"checked":""}> 공개</label>
      <label><input type="radio" name="v" value="private" ${p&&p.v==="private"?"checked":""}> 🔒 나만보기</label></div></div>
-   <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p?p.s.replace(/"/g,"&quot;"):""}"></label>
+   <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p&&!p.sauto?p.s.replace(/"/g,"&quot;"):""}"></label>
    <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
-   <label class="aiopt"><input type="checkbox" name="ai" value="on" checked> AI 제안 받기 <small>저장 후 최대 15분 뒤에 요약·태그·제목 후보가 도착해요. 반영은 내가 정해요. 나만보기 글은 AI에 보내지 않아요.</small></label>
+   <label class="aiopt"><input type="checkbox" name="ai" value="on" ${p?"":"checked"}> ${p?"AI 제안 다시 받기":"AI 제안 받기"} <small>저장 후 최대 15분 뒤에 요약·태그·제목 후보가 도착해요. 반영은 내가 정해요. 나만보기 글은 AI에 보내지 않아요.</small></label>
    <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">대표 이미지 <small style="font-weight:500">선택 · 목록 카드와 글 맨 위에 보여요. 비워 두면 본문 첫 이미지를 써요.</small></div>
     <div class="coverbox"><div id="coverPrev" class="thumb ph c0">대표 이미지 없음</div>
      <div class="row"><button type="button" class="btn" id="coverBtn">대표 이미지 고르기</button><button type="button" class="btn" id="coverDel" hidden>지우기</button></div>
@@ -711,6 +803,14 @@ function renderWrite(id){
     <div class="edhint" style="margin-top:6px">사진은 가로 900px로 줄여서 글에 함께 저장돼요. 한 번에 여러 장을 고르면 한 줄에 최대 3장씩 붙어요. 사진을 누르면 ↑ ↓ ✕ 버튼이 나오고, 끌어서 순서를 바꿀 수 있어요.</div><div id="edMeter" class="edhint" style="margin-top:4px" aria-live="polite"></div></div>
    <div class="row"><button class="btn primary" id="pubBtn" type="submit">${p?"수정 완료":"발행하기"}</button><button class="btn" type="button" data-home>취소</button></div></form></div>`;
   initEditor();
+  if(p){const ed=$("#ed");ed.innerHTML=p.body.map(block).join("");hydrateFigs(ed);coverData=p.own?p.cover:"";setCover();updMeter();}
+}
+// 저장된 글 HTML을 편집기에 불러올 때: 사진 블록에 편집용 막대·설명칸을 다시 붙인다(저장본에는 없음)
+function hydrateFigs(ed){
+  ed.querySelectorAll("figure.pf").forEach(f=>{const urls=[...f.querySelectorAll("img")].map(i=>i.getAttribute("src")),cap=f.querySelector("figcaption");
+    const nf=phFigure(urls);if(cap)nf.querySelector("figcaption").textContent=cap.textContent;f.replaceWith(nf);});
+  ed.querySelectorAll("figure.pf").forEach(f=>{if(!f.nextElementSibling)f.after(newP());});
+  if(!ed.firstElementChild||ed.firstElementChild.tagName==="FIGURE")ed.prepend(newP());
 }
 
 function initEditor(){
@@ -757,8 +857,9 @@ function initEditor(){
   updMeter();
 
 }
-function toast(m){const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),1800);}
-function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;}
+function toast(m){const n=document.querySelectorAll(".toast").length,t=document.createElement("div");t.className="toast";t.textContent=m;if(n)t.style.bottom="calc(24px + "+n*56+"px)";document.body.appendChild(t);setTimeout(()=>t.remove(),1800+n*400);}
+function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;$("#trashTab").hidden=!loggedIn;
+  if(!loggedIn&&f==="trash"){f="all";document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x.dataset.f==="all"));}}
 let lastTrack="",authReady=false;
 function track(view,id){
   if(!authReady||loggedIn||typeof gtag!=="function"||location.hostname!=="yourrhdiddl.github.io")return;
@@ -828,13 +929,14 @@ async function loadDate(){
 }
 function show(view,id,push){
   delArm=0;
-  if((view==="write")&&!loggedIn){after={view,id};view="login";}
+  if((view==="write"||view==="edit")&&!loggedIn){after={view,id};view="login";}
   ["home","detail","page"].forEach(n=>$("#"+n).hidden=true);
   if(view==="post"&&all().some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
   else if(view==="login"){$("#page").hidden=false;renderLogin();}
-  else if(view==="write"){$("#page").hidden=false;renderWrite(id);}
+  else if(view==="write"){$("#page").hidden=false;renderWrite(0);}
+  else if(view==="edit"&&remote.some(r=>r.id===id)){$("#page").hidden=false;renderWrite(id);}
   else{view="home";$("#home").hidden=false;renderPicks();renderList();loadQuote();loadDate();}
-  if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
+  if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="edit"?"#/edit/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
   track(view,id);
   window.scrollTo(0,0);
   startRead(view,id);
@@ -848,19 +950,23 @@ document.addEventListener("click",e=>{
 document.addEventListener("submit",async e=>{
   e.preventDefault();const fm=e.target,d=new FormData(fm);
   if(fm.id!=="writeForm")return;
+  const pid=fm.dataset.pid,lbl=pid?"수정 완료":"발행하기";
   const btn=$("#pubBtn");btn.disabled=true;btn.textContent="저장 중…";
   const tags=d.get("tags").split(/[,\s]+/).map(x=>x.replace(/^#/,"")).filter(Boolean);
   const content=clean($("#ed").innerHTML).trim();
   const plain=strip(content.replace(/<figcaption>[\s\S]*?<\/figcaption>/g,"")).replace(/&nbsp;/g," ").replace(/\s+/g," ").trim();
-  if(!plain&&!/<img /.test(content)){btn.disabled=false;btn.textContent="발행하기";return toast("내용을 입력해 주세요");}
-  if(new Blob([content]).size+coverData.length>950000){btn.disabled=false;btn.textContent="발행하기";return toast("글이 너무 커요. 사진 수를 줄여 주세요");}
+  if(!plain&&!/<img /.test(content)){btn.disabled=false;btn.textContent=lbl;return toast("내용을 입력해 주세요");}
+  if(new Blob([content]).size+coverData.length>950000){btn.disabled=false;btn.textContent=lbl;return toast("글이 너무 커요. 사진 수를 줄여 주세요");}
   const summary=d.get("s").trim()||plain.slice(0,60);
   try{
+    if(pid){const patch={title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",summaryAuto:!d.get("s").trim(),updatedAt:serverTimestamp()};
+      if(d.get("ai")==="on"){patch.aiStatus="pending";patch.aiError=null;}
+      await updateDoc(doc(db,"posts",pid),patch);await loadRemote();toast("수정했어요");return show("post",pid,true);}
     const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
     await loadRemote();toast("발행했어요");show("post",ref.id,true);
   }catch(err){
-    console.error(err);btn.disabled=false;btn.textContent="발행하기";
-    toast(err.code==="permission-denied"?"관리자만 글을 쓸 수 있어요":"저장하지 못했어요. 다시 시도해 주세요");
+    console.error(err);btn.disabled=false;btn.textContent=lbl;
+    toast(err.code==="permission-denied"?(pid?"권한이 없어요. Firestore 규칙에서 관리자의 수정을 허용해야 해요":"관리자만 글을 쓸 수 있어요"):"저장하지 못했어요. 다시 시도해 주세요");
   }
 });
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{f=b.dataset.f;document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x===b));renderList();});
@@ -882,11 +988,12 @@ document.addEventListener("click",async e=>{
 onAuthStateChanged(auth,async u=>{
   user=u;loggedIn=!!u&&(!ADMIN_UID||u.uid===ADMIN_UID);
   syncAuth();await loadRemote();authReady=true;if(loggedIn)window["ga-disable-G-MNDDLWDCR9"]=true;
-  if(u&&loggedIn&&!$("#page").hidden&&$("#loginForm,#googleBtn")){const n=after;after=null;toast("관리자로 로그인했어요");show(n?n.view:"home",0,true);}
+  if(u&&loggedIn&&!$("#page").hidden&&$("#loginForm,#googleBtn")){const n=after;after=null;toast("관리자로 로그인했어요");show(n?n.view:"home",n?n.id:0,true);}
   else if(u&&!loggedIn){toast("관리자 계정이 아니에요");await signOut(auth);}
   else fromHash();
 });
 function fromHash(){const m=location.hash.match(/^#\/post\/([\w-]+)/);if(m)return show("post",m[1],false);
+  const ed=location.hash.match(/^#\/edit\/([\w-]+)/);if(ed)return show("edit",ed[1],false);
   const w=location.hash.match(/^#\/(login|write)/);show(w?w[1]:"home",0,false);}
 window.addEventListener("hashchange",fromHash);syncAuth();fromHash();
 </script>
