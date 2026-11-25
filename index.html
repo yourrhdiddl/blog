@@ -757,6 +757,7 @@ function aiCard(p){
 let aiBusy=false;
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-ai]");if(!b||!loggedIn||aiBusy)return;
+  if(b.dataset.ai==="run")return; /* 「지금 AI 제안 받기」는 링크일 뿐이다. 글 상태를 바꾸면 안 된다(대기 카드가 '무시'로 바뀌는 오류 방지) */
   const card=b.closest(".aicard"),id=card&&card.dataset.pid,p=remote.find(x=>x.id===id);if(!p)return;
   const act=b.dataset.ai;
   if(act==="refresh"){await loadRemote();const n=remote.find(x=>x.id===id);toast(n&&n.aiStatus==="pending"?"아직 만드는 중이에요":"제안 상태를 새로 불러왔어요");return show("post",id,false);}
