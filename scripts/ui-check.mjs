@@ -17,7 +17,7 @@ const STUBS = {
   "firebase-app.js": `export const initializeApp=()=>({});`,
   "firebase-auth.js": `export const getAuth=()=>({});export class GoogleAuthProvider{}
 export const signInWithPopup=async()=>{};export const signInWithEmailAndPassword=async(a,e,p)=>{window.__evalCall={e,p};if(p!=="right-pass"){const x=new Error("bad");x.code="auth/invalid-credential";throw x}};export const signOut=async()=>{window.__admin=false};
-export const onAuthStateChanged=(a,cb)=>{setTimeout(()=>cb(window.__admin===false?null:{uid:"${ADMIN}"}),0)};`,
+export const onAuthStateChanged=(a,cb)=>{setTimeout(()=>cb(window.__admin===false?null:{uid:window.__uid||"${ADMIN}"}),0)};`,
   "firebase-firestore.js": `
 const T=()=>({toMillis:()=>Date.now()});
 export const getFirestore=()=>({});export const serverTimestamp=()=>T();
@@ -49,7 +49,7 @@ const results = [];
 const check = (id, name, ok, detail = "") => { results.push({ id, name, ok, detail }); console.log((ok ? "PASS " : "FAIL ") + id + " " + name + (detail ? " · " + detail : "")); };
 
 const browser = await chromium.launch();
-async function open(hash, { admin = true, deny = false, viewport = { width: 1100, height: 900 } } = {}) {
+async function open(hash, { admin = true, deny = false, asEval = false, viewport = { width: 1100, height: 900 } } = {}) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1, colorScheme: process.env.SCHEME === "dark" ? "dark" : "light" });
   const page = await ctx.newPage();
   page.on("pageerror", e => console.log("  [pageerror]", e.message.slice(0, 200)));
@@ -57,13 +57,14 @@ async function open(hash, { admin = true, deny = false, viewport = { width: 1100
     const u = route.request().url();
     const m = u.match(/gstatic\.com\/firebasejs\/[^/]+\/(firebase-[a-z]+\.js)/);
     if (m) return route.fulfill({ status: 200, contentType: "text/javascript", headers: { "access-control-allow-origin": "*" }, body: STUBS[m[1]] });
+    if (asEval && u.startsWith("file://") && u.split("#")[0].endsWith("/index.html")) return route.fulfill({ status: 200, contentType: "text/html", body: fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace('const EVAL_UID="";', 'const EVAL_UID="EV1";') });
     if (u.startsWith("file://")) return route.continue();
     return route.abort();
   });
-  await page.addInitScript(({ seedData, admin, deny }) => {
+  await page.addInitScript(({ seedData, admin, deny, asEv }) => {
     window.__db = seedData.map(d => ({ id: d.id, data: JSON.parse(JSON.stringify(d.data), (k, v) => v && v._ms ? { toMillis: () => v._ms } : v) }));
-    window.__writes = []; window.__deny = deny; if (!admin) window.__admin = false;
-  }, { seedData: seed(), admin, deny });
+    window.__writes = []; window.__deny = deny; if (!admin) window.__admin = false; if (asEv) window.__uid = "EV1";
+  }, { seedData: seed().concat(asEval ? [post("mine", { aiStatus: "ready", aiSuggest: SUG, authorUid: "EV1" })] : []), admin, deny, asEv: asEval });
   await page.goto("file://" + ROOT + "/index.html" + hash);
   await page.waitForTimeout(500);
   return { page, ctx };
@@ -122,6 +123,21 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   await page.screenshot({ path: path.join(OUT, "08_평가자_로그인.png"), clip: { x: 0, y: 0, width: 1100, height: 520 } });
   check("UI-35", "평가자 로그인: 고정 이메일과 입력한 비밀번호로만 로그인을 시도하고, 틀리면 안내가 뜬다", shown && call && call.e === "evaluator@aipm-review.test" && call.p === "wrong-pass" && /맞지 않/.test(msg), msg);
   check("UI-36", "평가용 비밀번호가 코드(index.html)에 들어 있지 않다", !/test1125/.test(html));
+  await ctx.close();
+}
+ // 평가자 범위(UI-37~39): AI 시연용 글만 고칠 수 있다
+{
+  const { page, ctx } = await open("#/", { asEval: true });
+  const tab = await page.$eval("#trashTab", e => e.hidden), wr = await page.$eval("#writeBtn", e => !e.hidden);
+  await page.evaluate(() => { location.hash = "#/post/rdy"; }); await page.waitForTimeout(300);
+  const otherAdm = await page.$(".adm"), otherAi = await page.$(".aicard");
+  await page.evaluate(() => { location.hash = "#/post/mine"; }); await page.waitForTimeout(300);
+  const mineAdm = await page.$(".adm"), mineAi = await page.$(".aicard");
+  check("UI-37", "평가자: 글쓰기 버튼은 보이고 휴지통 탭은 숨겨진다", tab && wr);
+  check("UI-38", "평가자: 남의 글에는 수정·삭제 버튼과 AI 카드가 없다", !otherAdm && !otherAi);
+  check("UI-39", "평가자: 자기가 쓴 글에는 수정 버튼과 AI 카드가 있다", !!mineAdm && !!mineAi);
+  await page.evaluate(() => { location.hash = "#/edit/rdy"; }); await page.waitForTimeout(300);
+  check("UI-40", "평가자: 남의 글 수정 주소로 가도 수정 화면이 열리지 않는다", !(await page.$("#writeForm")));
   await ctx.close();
 }
 // 기본 반영: 요약·태그 반영, 제목은 그대로
