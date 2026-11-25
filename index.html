@@ -465,7 +465,7 @@ import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, delete
 const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
 const auth=getAuth(app),db=getFirestore(app);
 const EVAL_EMAIL="evaluator@aipm-review.test"; // 평가자 전용 계정(Firebase 인증의 이메일/비밀번호). 비밀번호는 코드에 두지 않고 평가자가 직접 입력한다.
-const EVAL_UID=""; // 평가자 계정을 Firebase에서 만든 뒤 그 계정의 UID를 여기에 채운다. 비어 있으면 평가자 로그인은 "관리자 계정이 아니에요"로 막힌다.
+const EVAL_UID="BB44r7rG4BRnT97IyREDrmIzRB93"; // 평가자 계정(evaluator@aipm-review.test)의 Firebase UID. 비밀이 아니다. 평가 종료 후 계정을 삭제하고 이 값을 비운다.
 const ADMIN_UID="SVoqSkelN5VPVrv5vnKRwTGVK4K2"; // 관리자 계정의 UID. 처음 로그인한 뒤 채웁니다. 비어 있으면 로그인한 사람 누구나 글쓰기 버튼이 보입니다(저장은 보안 규칙이 막습니다).
 const samples=[
  {id:1,t:"AIPM이란? 첫 수업 핵심 정리",d:"2026.11.03",v:"public",tags:["개념","1주차"],
