@@ -181,6 +181,10 @@ textarea{min-height:320px;resize:vertical}
 .aicard .radios input,.aicard label>input[type=checkbox]{margin:0 8px 0 0;vertical-align:-2px}
 .aicard .radios label:has(input:checked) input{accent-color:#ffe44d}
 .aicard textarea{min-height:84px;height:84px;resize:vertical}
+.evalbox{margin-top:22px;font-size:.8125rem;color:var(--ink-3)}
+.evaltoggle{background:none;border:0;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+#evalForm{margin-top:10px;max-width:360px}#evalForm label{display:block;font-size:.8125rem;margin-bottom:4px}
+#evalForm .evalrow{display:flex;gap:8px}#evalForm .evalrow input{flex:1;min-width:0}#evalMsg{margin:6px 0 0;min-height:1.2em;color:var(--danger)}
 .aicard textarea,.aicard input[type=text]{width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font:inherit}
 .aicard .aih{margin-top:12px;font:700 13px var(--display)}.aicard .row{margin-top:14px}
 .aiopt{display:block;font-weight:600}.aiopt small{display:block;font-weight:500;color:var(--mute)}
@@ -455,11 +459,13 @@ mark.y,.hl.y{background:linear-gradient(transparent 14%,color-mix(in srgb,color-
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, deleteField, doc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 // Firebase 웹 설정값은 화면에 보여도 되는 값입니다. 데이터는 Firestore 보안 규칙이 지킵니다.
 const app=initializeApp({apiKey:"AIzaSyCkvW4mxiZmUIuH2D43MPSYji0ELx3C7_Q",authDomain:"aipm-review-note.firebaseapp.com",projectId:"aipm-review-note",storageBucket:"aipm-review-note.firebasestorage.app",messagingSenderId:"745324286328",appId:"1:745324286328:web:187e0f55ce311d28f8788d"});
 const auth=getAuth(app),db=getFirestore(app);
+const EVAL_EMAIL="evaluator@aipm-review.test"; // 평가자 전용 계정(Firebase 인증의 이메일/비밀번호). 비밀번호는 코드에 두지 않고 평가자가 직접 입력한다.
+const EVAL_UID=""; // 평가자 계정을 Firebase에서 만든 뒤 그 계정의 UID를 여기에 채운다. 비어 있으면 평가자 로그인은 "관리자 계정이 아니에요"로 막힌다.
 const ADMIN_UID="SVoqSkelN5VPVrv5vnKRwTGVK4K2"; // 관리자 계정의 UID. 처음 로그인한 뒤 채웁니다. 비어 있으면 로그인한 사람 누구나 글쓰기 버튼이 보입니다(저장은 보안 규칙이 막습니다).
 const samples=[
  {id:1,t:"AIPM이란? 첫 수업 핵심 정리",d:"2026.11.03",v:"public",tags:["개념","1주차"],
@@ -796,7 +802,9 @@ function renderLogin(){
   $("#page").innerHTML=`<div class="card"><h1>관리자 로그인</h1>
    <p style="color:var(--ink-2);margin-top:6px">글쓰기, 수정, 삭제는 관리자만 할 수 있어요.</p>
    <div class="row" style="margin-top:24px"><button class="btn primary" id="googleBtn" type="button">Google 계정으로 로그인</button></div>
-   <p id="loginMsg" style="margin-top:12px;color:var(--ink-3);font-size:.9375rem">비밀번호를 따로 만들지 않고 Google 계정으로 로그인해요.</p></div>`;
+   <p id="loginMsg" style="margin-top:12px;color:var(--ink-3);font-size:.9375rem">비밀번호를 따로 만들지 않고 Google 계정으로 로그인해요.</p>
+   <div class="evalbox"><button type="button" class="evaltoggle" id="evalToggle" aria-expanded="false" aria-controls="evalForm">평가자 로그인</button>
+    <form id="evalForm" hidden><label for="evalPw">평가용 비밀번호</label><div class="evalrow"><input type="password" id="evalPw" autocomplete="current-password" placeholder="평가 안내문의 비밀번호"><button class="btn" type="submit" id="evalBtn">로그인</button></div><p id="evalMsg" role="status"></p></form></div></div>`;
 }
 function renderWrite(id){
   const p=id?remote.find(x=>x.id===id)||null:null;
@@ -1046,13 +1054,26 @@ document.addEventListener("click",async e=>{
 });
 $("#q").oninput=e=>{q=e.target.value.trim();renderList();};
 $("#loginBtn").onclick=async()=>{if(loggedIn){await signOut(auth);toast("로그아웃했어요");show("home",0,true);}else show("login",0,true);};
+document.addEventListener("click",e=>{
+  const t=e.target.closest&&e.target.closest("#evalToggle");if(!t)return;
+  const f=$("#evalForm"),open=f.hidden;f.hidden=!open;t.setAttribute("aria-expanded",String(open));if(open)$("#evalPw").focus();
+});
+document.addEventListener("submit",async e=>{
+  if(e.target.id!=="evalForm")return;
+  const pw=$("#evalPw").value,m=$("#evalMsg"),b=$("#evalBtn");
+  if(!pw){m.textContent="비밀번호를 입력해 주세요.";return;}
+  b.disabled=true;m.textContent="";
+  try{await signInWithEmailAndPassword(auth,EVAL_EMAIL,pw);}
+  catch(err){console.error(err);const bad=/invalid-credential|wrong-password|user-not-found|invalid-login/.test(err.code||"");
+    m.textContent=bad?"비밀번호가 맞지 않아요.":(err.code==="auth/too-many-requests"?"시도가 많아 잠시 막혔어요. 잠시 뒤 다시 해 주세요.":"로그인하지 못했어요. 잠시 뒤 다시 해 주세요.");b.disabled=false;}
+});
 document.addEventListener("click",async e=>{
   if(e.target.id!=="googleBtn")return;
   try{await signInWithPopup(auth,new GoogleAuthProvider());}
   catch(err){console.error(err);const m=$("#loginMsg");if(m){m.textContent="로그인하지 못했어요. 팝업 차단을 풀고 다시 눌러 주세요.";m.style.color="#b42318";}}
 });
 onAuthStateChanged(auth,async u=>{
-  user=u;loggedIn=!!u&&(!ADMIN_UID||u.uid===ADMIN_UID);
+  user=u;loggedIn=!!u&&(!ADMIN_UID||u.uid===ADMIN_UID||(!!EVAL_UID&&u.uid===EVAL_UID));
   syncAuth();await loadRemote();authReady=true;if(loggedIn)window["ga-disable-G-MNDDLWDCR9"]=true;
   if(u&&loggedIn&&!$("#page").hidden&&$("#loginForm,#googleBtn")){const n=after;after=null;toast("관리자로 로그인했어요");show(n?n.view:"home",n?n.id:0,true);}
   else if(u&&!loggedIn){toast("관리자 계정이 아니에요");await signOut(auth);}
