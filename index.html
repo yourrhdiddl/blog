@@ -736,7 +736,7 @@ function aiChip(p){if(!loggedIn||!p.remote)return"";
 function aiCard(p){
   if(!loggedIn||!p.remote||!p.aiStatus||p.aiStatus==="none")return"";
   const st=p.aiStatus,sg=p.aiSuggest;
-  if(st==="pending")return`<div class="aicard" role="status" data-pid="${p.id}"><b>AI 제안 대기 중</b><p>글을 저장했어요. 제안은 최대 15분 뒤에 도착해요.</p><div class="row"><button class="btn" type="button" data-ai="refresh">제안 확인하기</button></div></div>`;
+  if(st==="pending")return`<div class="aicard" role="status" data-pid="${p.id}"><b>AI 제안 대기 중</b><p>글을 저장했어요. 자동 실행은 늦을 수 있어요(몇 분~몇 시간). 바로 받으려면 「지금 AI 제안 받기」에서 <b>Run workflow</b>를 눌러 주세요. 약 30초 뒤 「제안 확인하기」를 누르면 도착해 있어요.</p><div class="row"><a class="btn" data-ai="run" href="https://github.com/yourrhdiddl/blog/actions/workflows/ai-suggest.yml" target="_blank" rel="noopener">지금 AI 제안 받기</a><button class="btn" type="button" data-ai="refresh">제안 확인하기</button></div></div>`;
   if(st==="failed")return`<div class="aicard fail" role="status" data-pid="${p.id}"><b>AI 제안을 만들지 못했어요</b><p>제목·요약·태그는 직접 입력해 주세요.${p.aiError?` <small>(${esc(p.aiError)})</small>`:""}</p></div>`;
   if(st==="applied"||st==="dismissed")return`<div class="aicard done" data-pid="${p.id}"><small>AI 제안: ${st==="applied"?"반영했어요":"무시했어요"}</small></div>`;
   if(st==="ready"&&sg)return`<div class="aicard" id="aiCard" data-pid="${p.id}"><b>AI 제안 · 반영은 내가 정해요</b>
@@ -804,7 +804,7 @@ function renderWrite(id){
      <label><input type="radio" name="v" value="private" ${p&&p.v==="private"?"checked":""}> 🔒 나만보기</label></div></div>
    <label>한 줄 요약<input name="s" type="text" placeholder="목록에 보여줄 요약" value="${p&&!p.sauto?p.s.replace(/"/g,"&quot;"):""}"></label>
    <label>태그 <small>쉼표로 구분 (예: 개념, 실습)</small><input name="tags" type="text" value="${p?p.tags.join(", "):""}"></label>
-   <label class="aiopt"><input type="checkbox" name="ai" value="on" ${p?"":"checked"}> ${p?"AI 제안 다시 받기":"AI 제안 받기"} <small>저장 후 최대 15분 뒤에 요약·태그·제목 후보가 도착해요. 반영은 내가 정해요. 나만보기 글은 AI에 보내지 않아요.</small></label>
+   <label class="aiopt"><input type="checkbox" name="ai" value="on" ${p?"":"checked"}> ${p?"AI 제안 다시 받기":"AI 제안 받기"} <small>저장 후 요약·태그·제목 후보가 도착해요(자동 실행은 늦을 수 있어, 글 상세에서 바로 실행할 수 있어요). 반영은 내가 정해요. 나만보기 글은 AI에 보내지 않아요.</small></label>
    <div><div style="font-weight:700;font-size:.9375rem;margin-bottom:6px">대표 이미지 <small style="font-weight:500">선택 · 목록 카드와 글 맨 위에 보여요. 비워 두면 본문 첫 이미지를 써요.</small></div>
     <div class="coverbox"><div id="coverPrev" class="thumb ph c0">대표 이미지 없음</div>
      <div class="row"><button type="button" class="btn" id="coverBtn">대표 이미지 고르기</button><button type="button" class="btn" id="coverDel" hidden>지우기</button></div>
