@@ -520,6 +520,8 @@ const samples=[
 let remote=[],user=null,loadErr="";
 const $=s=>document.querySelector(s);
 let f="all",q="",loggedIn=false;
+const isEval=()=>!!EVAL_UID&&!!user&&user.uid===EVAL_UID; // 평가자: AI 시연용 글만 쓰고 고칠 수 있다(남의 글·휴지통은 불가)
+const canMod=p=>loggedIn&&!!p.remote&&(!isEval()||p.authorUid===user.uid);
 const all=()=>samples.filter(p=>p.v==="public"||loggedIn).concat(remote.filter(p=>!p.trashed)).sort((a,b)=>b.key-a.key);
 const TRASH_DAYS=15,trashed=()=>remote.filter(p=>p.trashed).sort((a,b)=>b.tms-a.tms);
 const fmt=t=>{const d=new Date(t);return d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0")};
@@ -527,15 +529,15 @@ async function loadRemote(){
   loadErr="";
   try{
     const ref=collection(db,"posts");
-    const snap=await getDocs(loggedIn?ref:query(ref,where("visibility","==","public")));
+    const snap=await getDocs(loggedIn&&!isEval()?ref:query(ref,where("visibility","==","public")));
     remote=snap.docs.map(x=>{const r=x.data(),ms=r.createdAt?r.createdAt.toMillis():Date.now();
       const html=r.contentFormat==="html"?clean(r.content||""):"",own=COVER_RE.test(r.cover||"")?r.cover:"";
-      return{id:x.id,remote:true,key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,photos:(Array.isArray(r.photos)?r.photos:[]).filter(u=>typeof u==="string"&&COVER_RE.test(u)).slice(0,MAXPH),pick:esc(r.title||""),aiStatus:r.aiStatus||"",aiError:r.aiError||"",aiSuggest:normAi(r.aiSuggest),trashed:r.trashed===true,tms:r.trashedAt&&r.trashedAt.toMillis?r.trashedAt.toMillis():Date.now(),pv:r.prevVisibility==="public"?"public":"private",rhtml:html,sauto:r.summaryAuto===true};});
+      return{id:x.id,remote:true,authorUid:r.authorUid||"",key:ms,d:fmt(ms),t:esc(r.title||""),s:esc(r.summary||""),v:r.visibility==="private"?"private":"public",tags:(r.tags||[]).map(esc),body:html?[["html",html]]:parse(r.content||""),cover:own||firstImg(html),own:!!own,photos:(Array.isArray(r.photos)?r.photos:[]).filter(u=>typeof u==="string"&&COVER_RE.test(u)).slice(0,MAXPH),pick:esc(r.title||""),aiStatus:r.aiStatus||"",aiError:r.aiError||"",aiSuggest:normAi(r.aiSuggest),trashed:r.trashed===true,tms:r.trashedAt&&r.trashedAt.toMillis?r.trashedAt.toMillis():Date.now(),pv:r.prevVisibility==="public"?"public":"private",rhtml:html,sauto:r.summaryAuto===true};});
     purgeOld();
   }catch(e){console.error(e);loadErr="글을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.";remote=[];}
 }
 async function purgeOld(){ // 휴지통에 15일 넘게 있던 글을 영구삭제(관리자가 사이트를 열 때 실행)
-  if(!loggedIn)return;const now=Date.now(),old=remote.filter(p=>p.trashed&&now-p.tms>=TRASH_DAYS*864e5);if(!old.length)return;
+  if(!loggedIn||isEval())return;const now=Date.now(),old=remote.filter(p=>p.trashed&&now-p.tms>=TRASH_DAYS*864e5);if(!old.length)return;
   const gone=new Set();
   for(const p of old){try{await deleteDoc(doc(db,"posts",p.id));gone.add(p.id);}catch(e){console.error(e);}}
   if(gone.size){remote=remote.filter(p=>!gone.has(p.id));toast("휴지통에서 "+TRASH_DAYS+"일이 지난 글 "+gone.size+"개를 영구삭제했어요");}
@@ -563,7 +565,7 @@ document.addEventListener("click",async e=>{
 });
 const badge=p=>`<span class="badge ${p.v==="public"?"pub":"priv"}">${p.v==="public"?"공개":"🔒 나만보기"}</span>`;
 function renderList(){
-  {const tt=$("#trashTab");if(tt)tt.textContent="휴지통"+(loggedIn&&trashed().length?" ("+trashed().length+")":"");}
+  {const tt=$("#trashTab");if(tt)tt.textContent="휴지통"+(loggedIn&&!isEval()&&trashed().length?" ("+trashed().length+")":"");}
   if(f==="photos"){const ph=allPhotos();phList=ph;$("#list").className="pgrid";
     $("#list").innerHTML=ph.length?ph.map((x,i)=>`<figure class="pitem"><button type="button" class="ptile" data-pi="${i}" aria-label="${qa(x.t)} 사진 크게 보기"><img src="${x.u}" alt="" loading="lazy"></button><figcaption>${x.v==="private"?"🔒 ":""}${x.t}<small>${x.d}</small></figcaption></figure>`).join("")
       :`<div class="empty">${loadErr||"아직 올린 사진이 없어요. 글을 쓸 때 '사진 갤러리'에서 사진을 올려 보세요."}</div>`;return;}
@@ -739,11 +741,11 @@ function parse(txt){const out=[];txt.replace(/\r/g,"").split(/\n{2,}/).forEach(b
 let delArm=0,after=null;
 const escA=s=>esc(s).replace(/"/g,"&quot;");
 function normAi(a){if(!a||typeof a!=="object")return null;const L=x=>Array.isArray(x)?x.map(String):[];return{summary:String(a.summary||""),tags:L(a.tags),titles:L(a.titles)};}
-function aiChip(p){if(!loggedIn||!p.remote)return"";
+function aiChip(p){if(!canMod(p))return"";
   if(p.aiStatus==="pending")return`<span class="aib">AI 제안 대기</span>`;
   if(p.aiStatus==="ready")return`<span class="aib on">AI 제안 도착</span>`;return"";}
 function aiCard(p){
-  if(!loggedIn||!p.remote||!p.aiStatus||p.aiStatus==="none")return"";
+  if(!canMod(p)||!p.aiStatus||p.aiStatus==="none")return"";
   const st=p.aiStatus,sg=p.aiSuggest;
   if(st==="pending")return`<div class="aicard" role="status" data-pid="${p.id}"><b>AI 제안 대기 중</b><p>글을 저장했어요. 자동 실행은 늦을 수 있어요(몇 분~몇 시간). 바로 받으려면 「지금 AI 제안 받기」에서 <b>Run workflow</b>를 눌러 주세요. 약 30초 뒤 「제안 확인하기」를 누르면 도착해 있어요.</p><div class="row"><a class="btn" data-ai="run" href="https://github.com/yourrhdiddl/blog/actions/workflows/ai-suggest.yml" target="_blank" rel="noopener">지금 AI 제안 받기</a><button class="btn" type="button" data-ai="refresh">제안 확인하기</button></div></div>`;
   if(st==="failed")return`<div class="aicard fail" role="status" data-pid="${p.id}"><b>AI 제안을 만들지 못했어요</b><p>제목·요약·태그는 직접 입력해 주세요.${p.aiError?` <small>(${esc(p.aiError)})</small>`:""}</p></div>`;
@@ -764,7 +766,7 @@ let aiBusy=false;
 document.addEventListener("click",async e=>{
   const b=e.target.closest("[data-ai]");if(!b||!loggedIn||aiBusy)return;
   if(b.dataset.ai==="run")return; /* 「지금 AI 제안 받기」는 링크일 뿐이다. 글 상태를 바꾸면 안 된다(대기 카드가 '무시'로 바뀌는 오류 방지) */
-  const card=b.closest(".aicard"),id=card&&card.dataset.pid,p=remote.find(x=>x.id===id);if(!p)return;
+  const card=b.closest(".aicard"),id=card&&card.dataset.pid,p=remote.find(x=>x.id===id);if(!p||!canMod(p))return;
   const act=b.dataset.ai;
   if(act==="refresh"){await loadRemote();const n=remote.find(x=>x.id===id);toast(n&&n.aiStatus==="pending"?"아직 만드는 중이에요":"제안 상태를 새로 불러왔어요");return show("post",id,false);}
   const sg=p.aiSuggest,fb={summary:"ignored",tags:"ignored",title:"ignored"},patch={};
@@ -789,7 +791,7 @@ function renderDetail(id){
    ${p.own?`<img class="cover" src="${p.cover}" alt="">`:""}
    <div class="meta">${badge(p)}<time>${p.d}</time></div>
    <h1><span class="hl">${p.t}</span></h1>
-   ${loggedIn&&p.remote?`<div class="adm"><button class="btn sm" type="button" data-act="edit" data-pid="${p.id}">수정</button><button class="btn sm danger" type="button" data-act="trash" data-pid="${p.id}">휴지통으로 보내기</button></div>`:""}
+   ${canMod(p)?`<div class="adm"><button class="btn sm" type="button" data-act="edit" data-pid="${p.id}">수정</button><button class="btn sm danger" type="button" data-act="trash" data-pid="${p.id}">휴지통으로 보내기</button></div>`:""}
    ${p.v==="private"?`<div class="sample-note">🔒 나만보기 글이에요. 관리자 로그인 상태에서만 보여요.</div>`:""}
    <p class="lead" style="margin-top:12px">${p.s}</p><div class="tags">${p.tags.map(t=>`<span>#${t}</span>`).join("")}</div>
    ${aiCard(p)}
@@ -932,7 +934,7 @@ function initEditor(){
 
 }
 function toast(m){const n=document.querySelectorAll(".toast").length,t=document.createElement("div");t.className="toast";t.textContent=m;if(n)t.style.bottom="calc(24px + "+n*56+"px)";document.body.appendChild(t);setTimeout(()=>t.remove(),1800+n*400);}
-function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;$("#trashTab").hidden=!loggedIn;
+function syncAuth(){$("#loginBtn").textContent=loggedIn?"로그아웃":"관리자 로그인";$("#adminChip").hidden=!loggedIn;$("#writeBtn").hidden=!loggedIn;$("#trashTab").hidden=!loggedIn||isEval();
   if(!loggedIn&&f==="trash"){f="all";document.querySelectorAll(".tab").forEach(x=>x.setAttribute("aria-selected",x.dataset.f==="all"));}}
 let lastTrack="",authReady=false;
 function track(view,id){
@@ -1008,7 +1010,7 @@ function show(view,id,push){
   if(view==="post"&&all().some(p=>p.id===id)){$("#detail").hidden=false;renderDetail(id);}
   else if(view==="login"){$("#page").hidden=false;renderLogin();}
   else if(view==="write"){$("#page").hidden=false;renderWrite(0);}
-  else if(view==="edit"&&remote.some(r=>r.id===id)){$("#page").hidden=false;renderWrite(id);}
+  else if(view==="edit"&&remote.some(r=>r.id===id&&canMod(r))){$("#page").hidden=false;renderWrite(id);}
   else{view="home";$("#home").hidden=false;renderPicks();renderList();loadQuote();loadDate();}
   if(push){try{history.replaceState(null,"",view==="post"?"#/post/"+id:view==="edit"?"#/edit/"+id:view==="home"?"#/":"#/"+view)}catch(e){}}
   track(view,id);
@@ -1033,10 +1035,10 @@ document.addEventListener("submit",async e=>{
   if(new Blob([content]).size+coverData.length>950000){btn.disabled=false;btn.textContent=lbl;return toast("글이 너무 커요. 사진 수를 줄여 주세요");}
   const summary=d.get("s").trim()||plain.slice(0,60);
   try{
-    if(pid){const patch={title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",summaryAuto:!d.get("s").trim(),updatedAt:serverTimestamp()};
+    if(pid){const patch={title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"&&!isEval()?"private":"public",summaryAuto:!d.get("s").trim(),updatedAt:serverTimestamp()};
       if(d.get("ai")==="on"){patch.aiStatus="pending";patch.aiError=null;}
       await updateDoc(doc(db,"posts",pid),patch);clearTimeout(draftT);draftClear(pid);await loadRemote();toast("수정했어요");return show("post",pid,true);}
-    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
+    const ref=await addDoc(collection(db,"posts"),{title:d.get("t").trim(),summary,tags,content,contentFormat:"html",cover:coverData,visibility:d.get("v")==="private"&&!isEval()?"private":"public",authorUid:user.uid,createdAt:serverTimestamp(),summaryAuto:!d.get("s").trim(),aiStatus:d.get("ai")==="on"?"pending":"none"});
     clearTimeout(draftT);draftClear("");await loadRemote();toast("발행했어요");show("post",ref.id,true);
   }catch(err){
     console.error(err);btn.disabled=false;btn.textContent=lbl;
