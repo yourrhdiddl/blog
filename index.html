@@ -415,6 +415,12 @@ body:has(#detail:not([hidden]) .article){background-color:var(--soft)}
 /* 형광펜: 글자 높이 전체를 칠하는 방식(회색 형광펜과 같은 모양), 연한 민트, 글자는 굵게 */
 mark,.hl,mark.m,mark.p{background:linear-gradient(transparent 14%,color-mix(in srgb,var(--mint) 42%,transparent) 14%,color-mix(in srgb,var(--mint) 42%,transparent) 94%,transparent 94%);font-weight:700;padding:0 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 mark.y,.hl.y{background:linear-gradient(transparent 14%,color-mix(in srgb,color-mix(in srgb,var(--mint2) 70%,#fff3a0) 40%,transparent) 14%,color-mix(in srgb,color-mix(in srgb,var(--mint2) 70%,#fff3a0) 40%,transparent) 94%,transparent 94%);font-weight:700}
+/* 글쓰기 도구 모음의 형광펜: 민트(m), 회색(g) */
+mark.g{background:linear-gradient(transparent 14%,#d6d6d2 14%,#d6d6d2 94%,transparent 94%)}
+.tb .hlg{display:flex;gap:4px;align-items:center;flex:none}
+.tb .hlb{min-width:auto;padding:0 10px;font-size:12px;border-radius:8px;white-space:nowrap;flex:none}
+.tb .hlb.m{background:color-mix(in srgb,var(--mint) 42%,transparent)}.tb .hlb.g{background:#d6d6d2}
+@media (prefers-color-scheme:dark){mark.g{background:linear-gradient(transparent 14%,rgba(255,255,255,.24) 14%,rgba(255,255,255,.24) 94%,transparent 94%)}.tb .hlb.g{background:#4a5656}}
 </style>
 </head>
 <body>
@@ -590,7 +596,7 @@ function block(b){const[k,v]=b;
   if(k==="ul")return`<ul>${v.map(x=>`<li>${x}</li>`).join("")}</ul>`;if(k==="html")return v;return"";}
 function esc(s){return String(s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 
-const OKT={P:1,DIV:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,FONT:1,IMG:1,A:1,FIGURE:1,FIGCAPTION:1};
+const OKT={P:1,DIV:1,BR:1,B:1,STRONG:1,I:1,EM:1,U:1,S:1,STRIKE:1,H3:1,UL:1,OL:1,LI:1,BLOCKQUOTE:1,FONT:1,IMG:1,A:1,FIGURE:1,FIGCAPTION:1,MARK:1};
 const BADT=/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META|SVG|MATH|FORM|INPUT|TEXTAREA|BUTTON|SELECT|TEMPLATE|NOSCRIPT)$/;
 function clean(h){
   const doc=new DOMParser().parseFromString("<body>"+h,"text/html");
@@ -609,6 +615,7 @@ function clean(h){
       if(!/^(data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+\/=]+|https:\/\/[^\s"'<>]+)$/.test(src)){c.remove();return;}
       keep.src=src;keep.alt=(c.getAttribute("alt")||"").slice(0,200);keep.loading="lazy";}
     if(t==="FIGURE"){const gi=c.querySelectorAll("img").length;if(!gi){c.remove();return;}keep.class=gi>1?"pf g"+Math.min(gi,3):"pf";}
+    if(t==="MARK"){const mc=c.getAttribute("class")||"";keep.class=/^(m|g|y|p)$/.test(mc)?mc:"m";}
     if(t==="FIGCAPTION"&&!c.textContent.trim()){c.remove();return;}
     if(t==="A"){const href=c.getAttribute("href")||"";
       if(!/^https?:\/\//i.test(href)){c.replaceWith(...c.childNodes);return;}
@@ -630,6 +637,18 @@ document.addEventListener("selectionchange",()=>{const ed=document.getElementByI
   if(ed&&s.rangeCount&&ed.contains(s.anchorNode))savedRange=s.getRangeAt(0).cloneRange();});
 function edFocus(){const ed=$("#ed"),cur=getSelection();const inside=cur.rangeCount&&ed.contains(cur.anchorNode)&&ed.contains(cur.focusNode);ed.focus();if(inside){}else if(savedRange){const s=getSelection();s.removeAllRanges();s.addRange(savedRange);}
   else{const r=document.createRange();r.selectNodeContents(ed);r.collapse(false);const s=getSelection();s.removeAllRanges();s.addRange(r);}}
+function edMark(k){ // 형광펜: 선택한 글자를 <mark class="m|g">로 감싼다. 같은 색을 다시 누르거나 「펜 지움」이면 걷어 낸다(브라우저 명령은 mark를 style로 바꿔 버려서 직접 감싼다)
+  edFocus();const ed=$("#ed"),sel=getSelection();if(!sel.rangeCount)return;const r=sel.getRangeAt(0);
+  const up=n=>{while(n&&n!==ed){if(n.nodeType===1&&n.tagName==="MARK")return n;n=n.parentNode;}return null;};
+  const hit=up(r.startContainer)||up(r.endContainer);
+  if(hit&&(r.collapsed||k==="x"||hit.className===k)){const kids=[...hit.childNodes];hit.replaceWith(...kids);ed.normalize();updMeter();return;}
+  if(r.collapsed)return toast("형광펜을 칠할 글자를 먼저 드래그해서 골라 주세요");
+  if(k==="x")return;
+  const box=document.createElement("div");box.appendChild(r.cloneContents());
+  if(box.querySelector("p,div,h3,ul,ol,li,blockquote,figure"))return toast("형광펜은 한 문단 안에서만 칠할 수 있어요");
+  const frag=r.extractContents();frag.querySelectorAll&&frag.querySelectorAll("mark").forEach(m=>m.replaceWith(...m.childNodes));
+  const mk=document.createElement("mark");mk.className=k;mk.appendChild(frag);r.insertNode(mk);
+  const nr=document.createRange();nr.selectNodeContents(mk);sel.removeAllRanges();sel.addRange(nr);updMeter();}
 function edCmd(cmd,val){edFocus();document.execCommand("styleWithCSS",false,false);document.execCommand(cmd,false,val);}
 function newP(){const p=document.createElement("p");p.innerHTML="<br>";return p;}
 function phFigure(urls){urls=[].concat(urls);const f=document.createElement("figure");f.contentEditable="false";
@@ -834,6 +853,8 @@ function renderWrite(id){
      <span class="sep"></span>
      <span class="swg" role="group" aria-label="글자색"><button type="button" class="tbb sw" data-color="#111111" style="background:#111111" title="검정" aria-label="글자색 검정"></button><button type="button" class="tbb sw" data-color="#475569" style="background:#475569" title="진회색" aria-label="글자색 진회색"></button><button type="button" class="tbb sw" data-color="#6b7280" style="background:#6b7280" title="회색" aria-label="글자색 회색"></button><button type="button" class="tbb sw" data-color="#dc2626" style="background:#dc2626" title="빨강" aria-label="글자색 빨강"></button><button type="button" class="tbb sw" data-color="#ea580c" style="background:#ea580c" title="주황" aria-label="글자색 주황"></button><button type="button" class="tbb sw" data-color="#d97706" style="background:#d97706" title="호박" aria-label="글자색 호박"></button><button type="button" class="tbb sw" data-color="#ca8a04" style="background:#ca8a04" title="노랑" aria-label="글자색 노랑"></button><button type="button" class="tbb sw" data-color="#65a30d" style="background:#65a30d" title="연두" aria-label="글자색 연두"></button><button type="button" class="tbb sw" data-color="#16a34a" style="background:#16a34a" title="초록" aria-label="글자색 초록"></button><button type="button" class="tbb sw" data-color="#059669" style="background:#059669" title="에메랄드" aria-label="글자색 에메랄드"></button><button type="button" class="tbb sw" data-color="#0d9488" style="background:#0d9488" title="청록" aria-label="글자색 청록"></button><button type="button" class="tbb sw" data-color="#0891b2" style="background:#0891b2" title="시안" aria-label="글자색 시안"></button><button type="button" class="tbb sw" data-color="#0284c7" style="background:#0284c7" title="하늘" aria-label="글자색 하늘"></button><button type="button" class="tbb sw" data-color="#2563eb" style="background:#2563eb" title="파랑" aria-label="글자색 파랑"></button><button type="button" class="tbb sw" data-color="#4f46e5" style="background:#4f46e5" title="남색" aria-label="글자색 남색"></button><button type="button" class="tbb sw" data-color="#7c3aed" style="background:#7c3aed" title="보라" aria-label="글자색 보라"></button><button type="button" class="tbb sw" data-color="#9333ea" style="background:#9333ea" title="자주" aria-label="글자색 자주"></button><button type="button" class="tbb sw" data-color="#c026d3" style="background:#c026d3" title="분홍보라" aria-label="글자색 분홍보라"></button><button type="button" class="tbb sw" data-color="#db2777" style="background:#db2777" title="분홍" aria-label="글자색 분홍"></button><button type="button" class="tbb sw" data-color="#e11d48" style="background:#e11d48" title="장미" aria-label="글자색 장미"></button></span>
      <span class="sep"></span>
+     <span class="hlg" role="group" aria-label="형광펜"><button type="button" class="tbb hlb m" data-hl="m" title="민트 형광펜" aria-label="민트 형광펜">민트 펜</button><button type="button" class="tbb hlb g" data-hl="g" title="회색 형광펜" aria-label="회색 형광펜">회색 펜</button><button type="button" class="tbb hlb" data-hl="x" title="형광펜 지우기" aria-label="형광펜 지우기">펜 지움</button></span>
+     <span class="sep"></span>
      <button type="button" class="tbb" data-cmd="formatBlock" data-val="<h3>" title="소제목">소제목</button>
      <button type="button" class="tbb" data-cmd="formatBlock" data-val="<blockquote>" title="인용">인용</button>
      <button type="button" class="tbb" data-cmd="insertUnorderedList" title="목록">• 목록</button>
@@ -897,7 +918,8 @@ function initEditor(){
     if(!f||!/^image\//.test(f.type))return toast("이미지 파일만 고를 수 있어요");
     try{coverData=await resizeImg(f,720);setCover();}catch(x){toast("이미지를 불러오지 못했어요");}};
   document.execCommand("defaultParagraphSeparator",false,"p");
-  document.querySelectorAll(".tb [data-cmd],.tb [data-color],#imgBtn").forEach(b=>b.addEventListener("mousedown",e=>e.preventDefault()));
+  document.querySelectorAll(".tb [data-cmd],.tb [data-color],.tb [data-hl],#imgBtn").forEach(b=>b.addEventListener("mousedown",e=>e.preventDefault()));
+  document.querySelectorAll(".tb [data-hl]").forEach(b=>b.onclick=()=>edMark(b.dataset.hl));
   document.querySelectorAll(".tb [data-cmd]").forEach(b=>b.onclick=()=>edCmd(b.dataset.cmd,b.dataset.val));
   document.querySelectorAll(".tb [data-color]").forEach(b=>b.onclick=()=>edCmd("foreColor",b.dataset.color));
   $("#szSel").onchange=e=>{if(e.target.value)edCmd("fontSize",e.target.value);e.target.value="";};
