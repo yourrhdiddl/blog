@@ -91,6 +91,8 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   const t = await page.textContent(".aicard");
   await page.screenshot({ path: path.join(OUT, "02_대기_카드.png"), clip: { x: 0, y: 0, width: 1100, height: 600 } });
   check("UI-03", "대기 글: 'AI 제안 대기 중' 안내와 확인 버튼", /대기 중/.test(t) && !!(await page.$('[data-ai="refresh"]')));
+  { const a = await page.$('[data-ai="run"]'); const href = a ? await a.getAttribute("href") : "", tg = a ? await a.getAttribute("target") : "", rel = a ? await a.getAttribute("rel") : "";
+    check("UI-32", "대기 글: 「지금 AI 제안 받기」가 Actions 실행 페이지를 새 창으로 연다(자동 실행이 늦을 때의 확실한 방법)", /github\.com\/yourrhdiddl\/blog\/actions\/workflows\/ai-suggest\.yml$/.test(href) && tg === "_blank" && /noopener/.test(rel) && !/15분/.test(t), href); }
   await ctx.close();
   const o = await open("#/post/fail");
   const t2 = await o.page.textContent(".aicard");
