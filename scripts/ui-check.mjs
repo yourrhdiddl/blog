@@ -64,7 +64,7 @@ async function open(hash, { admin = true, deny = false, asEval = false, viewport
   await page.addInitScript(({ seedData, admin, deny, asEv }) => {
     window.__db = seedData.map(d => ({ id: d.id, data: JSON.parse(JSON.stringify(d.data), (k, v) => v && v._ms ? { toMillis: () => v._ms } : v) }));
     window.__writes = []; window.__deny = deny; if (!admin) window.__admin = false; if (asEv) window.__uid = "EV1";
-  }, { seedData: seed().concat(asEval ? [post("mine", { aiStatus: "ready", aiSuggest: SUG, authorUid: "EV1" })] : []), admin, deny, asEv: asEval });
+  }, { seedData: seed().concat(asEval ? [post("mine", { aiStatus: "ready", aiSuggest: SUG, authorUid: "EV1" }), post("mine-p", { aiStatus: "pending", authorUid: "EV1" })] : []), admin, deny, asEv: asEval });
   await page.goto("file://" + ROOT + "/index.html" + hash);
   await page.waitForTimeout(500);
   return { page, ctx };
@@ -136,6 +136,9 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   check("UI-37", "평가자: 글쓰기 버튼은 보이고 휴지통 탭은 숨겨진다", tab && wr);
   check("UI-38", "평가자: 남의 글에는 수정·삭제 버튼과 AI 카드가 없다", !otherAdm && !otherAi);
   check("UI-39", "평가자: 자기가 쓴 글에는 수정 버튼과 AI 카드가 있다", !!mineAdm && !!mineAi);
+  await page.evaluate(() => { location.hash = "#/post/mine-p"; }); await page.waitForTimeout(300);
+  const pendRun = await page.$("[data-ai=run]"), pendTxt = await page.textContent(".aicard");
+  check("UI-41", "평가자: 대기 카드에는 GitHub 실행 링크가 없고 담당자 안내가 보인다", !pendRun && /담당자/.test(pendTxt));
   await page.evaluate(() => { location.hash = "#/edit/rdy"; }); await page.waitForTimeout(300);
   check("UI-40", "평가자: 남의 글 수정 주소로 가도 수정 화면이 열리지 않는다", !(await page.$("#writeForm")));
   await ctx.close();
