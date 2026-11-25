@@ -3,14 +3,15 @@
 > **이 문서의 목적:** PRD의 버전별 문서를 한곳에서 찾아 열고, 모든 문서의 파일명 규칙을 정해 둔다.
 
 ## 1. 기본 정보
-**문서 버전** v2.11 · **작성일** 2026-11-24 (수정 2026-11-25)
+**문서 버전** v2.12 · **작성일** 2026-11-24 (수정 2026-11-25)
 
 ## 2. PRD 버전 목록
 최신 버전은 맨 위입니다. 파일명을 누르면 해당 버전 문서로 이동합니다.
 
 | 버전 | 문서 | 주요 변경 | 상태 |
 |---|---|---|---|
-| v1.22 | [PRD_AIPM복습노트_AI글정리도우미_v1.22_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.22_%ED%95%98%EB%8A%98_20261124.md) | Claude 모델 기준 요약·태그 측정(5.1.4절), 읽는 법 정정, 15장 17번 | **최신** |
+| v1.23 | [PRD_AIPM복습노트_AI글정리도우미_v1.23_하늘_20261125.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.23_%ED%95%98%EB%8A%98_20261125.md) | Claude 2차 측정(12편 합산·제목 포함, 5.1.4절 보강), 평가자 1페이지 요약 연결 | **최신** |
+| v1.22 | [PRD_AIPM복습노트_AI글정리도우미_v1.22_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.22_%ED%95%98%EB%8A%98_20261124.md) | Claude 모델 기준 요약·태그 측정(5.1.4절), 읽는 법 정정, 15장 17번 | 이전 |
 | v1.21 | [PRD_AIPM복습노트_AI글정리도우미_v1.21_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.21_%ED%95%98%EB%8A%98_20261124.md) | 신뢰도 표현 정정, 평가자 동작 확인 반영, 5.2 고객 범위, 캡처 내용 기록 | 이전 |
 | v1.20 | [PRD_AIPM복습노트_AI글정리도우미_v1.20_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.20_%ED%95%98%EB%8A%98_20261124.md) | 반영·무시 시험 후 되돌림 기록(하늘님 보고), 테스트 보고서 v0.16 링크 | 이전 |
 | v1.19 | [PRD_AIPM복습노트_AI글정리도우미_v1.19_하늘_20261124.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.19_%ED%95%98%EB%8A%98_20261124.md) | 승인 표기 정리, 첫 페이지 다듬기, 5.1.3절 공개 데이터 점검, 평가자 안내문 추가 | 이전 |
@@ -76,7 +77,8 @@
 | 실패로그 | [실패로그_AIPM복습노트_문서4종네번째_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%EB%AC%B8%EC%84%9C4%EC%A2%85%EB%84%A4%EB%B2%88%EC%A7%B8_%ED%95%98%EB%8A%98_20261117.md) | |
 | 실패로그 | [실패로그_AIPM복습노트_붙여넣기잔여내용_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%EB%B6%99%EC%97%AC%EB%84%A3%EA%B8%B0%EC%9E%94%EC%97%AC%EB%82%B4%EC%9A%A9_%ED%95%98%EB%8A%98_20261117.md) | |
 | 실패로그 | [실패로그_AIPM복습노트_폼data-id_하늘_20261117.md](%EC%8B%A4%ED%8C%A8%EB%A1%9C%EA%B7%B8_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%ED%8F%BCdata-id_%ED%95%98%EB%8A%98_20261117.md) | |
-| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.18_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.18_%ED%95%98%EB%8A%98_20261124.md) | **최신**, 4-9장(Claude in Chrome 자동 시험: Claude 모델 요약 4/4·태그 4/4, 제목 미평가, 상한 보류 6편, 캡처 3장의 내용) |
+| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.19_하늘_20261125.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.19_%ED%95%98%EB%8A%98_20261125.md) | **최신**, 4-10장(Claude 2차 측정 새 글 8편: 12편 합산 요약 12/12·태그 12/12·요약+제목 20/20, Claude 판정 한계) |
+| 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.18_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.18_%ED%95%98%EB%8A%98_20261124.md) | 이전, 4-9장(Claude in Chrome 자동 시험: Claude 모델 요약 4/4·태그 4/4, 제목 미평가, 상한 보류 6편, 캡처 3장의 내용) |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.17_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.17_%ED%95%98%EB%8A%98_20261124.md) | 이전, 4-8장(평가자 동작 확인 보고, 관리자 화면 캡처 2장의 내용) |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.16_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.16_%ED%95%98%EB%8A%98_20261124.md) | 반영·무시 시험 후 되돌림 반영(4-5장·4-7장) |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.15_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.15_%ED%95%98%EB%8A%98_20261124.md) | 4-7장(공개 데이터로 시연 글 10개 제안 지표·글 상태 점검) |
@@ -94,7 +96,9 @@
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.3_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.3_%ED%95%98%EB%8A%98_20261124.md) | 이전, 표본 확대 8편·지시문 시험·화면 시험 30건 |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.2_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.2_%ED%95%98%EB%8A%98_20261124.md) | 이전, 실제 Gemini 실행·수락 결과, v3.2 화면 시험 |
 | 테스트보고서 | [테스트보고서_AIPM복습노트_AI글정리도우미_v0.1_하늘_20261124.md](%ED%85%8C%EC%8A%A4%ED%8A%B8%EB%B3%B4%EA%B3%A0%EC%84%9C_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v0.1_%ED%95%98%EB%8A%98_20261124.md) | 이전, 캡처 이미지는 docs/img 폴더 |
-| PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.22_하늘_20261124_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.22_%ED%95%98%EB%8A%98_20261124_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 최신, 외부공유용. PRD v1.22에서 내부 정보(결정 번호·예약 ID·변경 이력)를 뺀 사본 |
+| PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.23_하늘_20261125_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.23_%ED%95%98%EB%8A%98_20261125_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 최신, 외부공유용. PRD v1.23에서 내부 정보를 뺀 사본 |
+| 평가자 1페이지 요약 | [요약_AIPM복습노트_평가자1페이지_v1.0_하늘_20261125_외부공유.md](%EC%9A%94%EC%95%BD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_%ED%8F%89%EA%B0%80%EC%9E%901%ED%8E%98%EC%9D%B4%EC%A7%80_v1.0_%ED%95%98%EB%8A%98_20261125_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 최신, 외부공유용. 결론·근거·한계·링크 1페이지 |
+| PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.22_하늘_20261124_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.22_%ED%95%98%EB%8A%98_20261124_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 이전 버전(v1.22), 외부공유용. PRD v1.22에서 내부 정보(결정 번호·예약 ID·변경 이력)를 뺀 사본 |
 | PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.21_하늘_20261124_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.21_%ED%95%98%EB%8A%98_20261124_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 이전 버전(v1.21). 외부공유용. PRD v1.21에서 내부 정보(결정 번호·예약 ID·변경 이력)를 뺀 사본 |
 | PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.20_하늘_20261124_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.20_%ED%95%98%EB%8A%98_20261124_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 이전 버전(v1.20), 외부공유용. PRD v1.20에서 내부 정보(결정 번호·예약 ID·변경 이력)를 뺀 사본 |
 | PRD 외부공유용 | [PRD_AIPM복습노트_AI글정리도우미_v1.19_하늘_20261124_외부공유.md](PRD_AIPM%EB%B3%B5%EC%8A%B5%EB%85%B8%ED%8A%B8_AI%EA%B8%80%EC%A0%95%EB%A6%AC%EB%8F%84%EC%9A%B0%EB%AF%B8_v1.19_%ED%95%98%EB%8A%98_20261124_%EC%99%B8%EB%B6%80%EA%B3%B5%EC%9C%A0.md) | 이전 버전(v1.19), 외부공유용. PRD v1.19에서 내부 정보(결정 번호·예약 ID·변경 이력)를 뺀 사본 |
