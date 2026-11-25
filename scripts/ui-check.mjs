@@ -16,7 +16,7 @@ const ADMIN = "SVoqSkelN5VPVrv5vnKRwTGVK4K2";
 const STUBS = {
   "firebase-app.js": `export const initializeApp=()=>({});`,
   "firebase-auth.js": `export const getAuth=()=>({});export class GoogleAuthProvider{}
-export const signInWithPopup=async()=>{};export const signOut=async()=>{window.__admin=false};
+export const signInWithPopup=async()=>{};export const signInWithEmailAndPassword=async(a,e,p)=>{window.__evalCall={e,p};if(p!=="right-pass"){const x=new Error("bad");x.code="auth/invalid-credential";throw x}};export const signOut=async()=>{window.__admin=false};
 export const onAuthStateChanged=(a,cb)=>{setTimeout(()=>cb(window.__admin===false?null:{uid:"${ADMIN}"}),0)};`,
   "firebase-firestore.js": `
 const T=()=>({toMillis:()=>Date.now()});
@@ -105,6 +105,24 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   await o.page.screenshot({ path: path.join(OUT, "03_실패_카드.png"), clip: { x: 0, y: 0, width: 1100, height: 600 } });
   check("UI-04", "실패 글: '직접 입력' 안내가 보이고 반영 버튼은 없다", /직접 입력/.test(t2) && !(await o.page.$('[data-ai="apply"]')), t2.replace(/\s+/g, " ").slice(0, 60));
   await o.ctx.close();
+}
+// 평가자 로그인(UI-34~36): 구글 로그인 아래 작은 글씨, 비밀번호는 코드에 없음, 틀리면 안내
+{
+  const { page, ctx } = await open("#/login", { admin: false });
+  const html = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const hidden0 = await page.$eval("#evalForm", e => e.hidden);
+  const gBefore = await page.$("#googleBtn");
+  const fs1 = await page.$eval("#evalToggle", e => parseFloat(getComputedStyle(e).fontSize));
+  const gy = (await (await page.$("#googleBtn")).boundingBox()).y, ty = (await (await page.$("#evalToggle")).boundingBox()).y;
+  check("UI-34", "로그인 화면: 구글 버튼 아래에 작은 글씨 「평가자 로그인」이 있고 입력칸은 접혀 있다", !!gBefore && hidden0 && fs1 <= 14 && ty > gy, "글자 " + fs1 + "px");
+  await page.click("#evalToggle"); await page.waitForTimeout(100);
+  const shown = await page.$eval("#evalForm", e => !e.hidden);
+  await page.fill("#evalPw", "wrong-pass"); await page.click("#evalBtn"); await page.waitForTimeout(300);
+  const msg = await page.textContent("#evalMsg"), call = await page.evaluate(() => window.__evalCall);
+  await page.screenshot({ path: path.join(OUT, "08_평가자_로그인.png"), clip: { x: 0, y: 0, width: 1100, height: 520 } });
+  check("UI-35", "평가자 로그인: 고정 이메일과 입력한 비밀번호로만 로그인을 시도하고, 틀리면 안내가 뜬다", shown && call && call.e === "evaluator@aipm-review.test" && call.p === "wrong-pass" && /맞지 않/.test(msg), msg);
+  check("UI-36", "평가용 비밀번호가 코드(index.html)에 들어 있지 않다", !/test1125/.test(html));
+  await ctx.close();
 }
 // 기본 반영: 요약·태그 반영, 제목은 그대로
 {
