@@ -143,6 +143,28 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   check("UI-40", "평가자: 남의 글 수정 주소로 가도 수정 화면이 열리지 않는다", !(await page.$("#writeForm")));
   await ctx.close();
 }
+// 형광펜(UI-42~44): 민트·회색 버튼, 다시 누르면 걷어 냄, 저장해도 남음
+{
+  const { page, ctx } = await open("#/write");
+  await page.fill('input[name="t"]', "형광펜 글");
+  await page.evaluate(() => { document.querySelector("#ed").innerHTML = "<p>민트로 칠할 말과 회색으로 칠할 말이 있습니다.</p>"; });
+  const sel = (from, to) => page.evaluate(([f, t]) => { const p = document.querySelector("#ed p"), n = p.lastChild || p.firstChild; const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); let node, off = 0, r = document.createRange(), s = false, e = false; while ((node = w.nextNode())) { const len = node.textContent.length; if (!s && f < off + len) { r.setStart(node, f - off); s = true; } if (s && !e && t <= off + len) { r.setEnd(node, t - off); e = true; break; } off += len; } const g = getSelection(); g.removeAllRanges(); g.addRange(r); document.querySelector("#ed").focus(); }, [from, to]);
+  const hasBtns = !!(await page.$('[data-hl="m"]')) && !!(await page.$('[data-hl="g"]')) && !!(await page.$('[data-hl="x"]'));
+  await sel(0, 2); await page.click('[data-hl="m"]'); await page.waitForTimeout(100);
+  const m1 = await page.$$eval("#ed mark.m", e => e.map(x => x.textContent));
+  await sel(m1.length ? 12 : 0, m1.length ? 16 : 2); await page.click('[data-hl="g"]'); await page.waitForTimeout(100);
+  const g1 = await page.$$eval("#ed mark.g", e => e.map(x => x.textContent));
+  check("UI-42", "글쓰기에 형광펜 민트·회색·지움 버튼이 있고, 글자를 골라 누르면 칠해진다", hasBtns && m1.join() === "민트" && g1.length === 1, JSON.stringify([m1, g1]));
+  await page.evaluate(() => { const m = document.querySelector("#ed mark.m"), r = document.createRange(); r.selectNodeContents(m.firstChild); const g = getSelection(); g.removeAllRanges(); g.addRange(r); });
+  await page.click('[data-hl="m"]'); await page.waitForTimeout(100);
+  const left = await page.$$eval("#ed mark.m", e => e.length);
+  check("UI-43", "같은 색 형광펜을 한 번 더 누르면 칠이 걷힌다", left === 0);
+  await page.screenshot({ path: path.join(OUT, "09_형광펜.png"), clip: { x: 0, y: 150, width: 1100, height: 520 } });
+  await page.click("#pubBtn"); await page.waitForTimeout(400);
+  const d = await dbDoc(page, "new9");
+  check("UI-44", "저장해도 회색 형광펜(<mark class=g>)이 남는다", /<mark class="g">/.test(d.content), d.content.slice(0, 120));
+  await ctx.close();
+}
 // 기본 반영: 요약·태그 반영, 제목은 그대로
 {
   const { page, ctx } = await open("#/post/rdy");
