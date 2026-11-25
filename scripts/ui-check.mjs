@@ -93,6 +93,12 @@ const dbDoc = (page, id) => page.evaluate(i => JSON.parse(JSON.stringify(window.
   check("UI-03", "대기 글: 'AI 제안 대기 중' 안내와 확인 버튼", /대기 중/.test(t) && !!(await page.$('[data-ai="refresh"]')));
   { const a = await page.$('[data-ai="run"]'); const href = a ? await a.getAttribute("href") : "", tg = a ? await a.getAttribute("target") : "", rel = a ? await a.getAttribute("rel") : "";
     check("UI-32", "대기 글: 「지금 AI 제안 받기」가 Actions 실행 페이지를 새 창으로 연다(자동 실행이 늦을 때의 확실한 방법)", /github\.com\/yourrhdiddl\/blog\/actions\/workflows\/ai-suggest\.yml$/.test(href) && tg === "_blank" && /noopener/.test(rel) && !/15분/.test(t), href); }
+  { /* UI-33: 링크를 눌러도 글 상태가 바뀌지 않는다(실제로 눌렀을 때 대기 카드가 '무시'로 바뀌던 오류의 재발 방지) */
+    ctx.on("page", p => p.close().catch(() => {}));
+    await page.click('[data-ai="run"]'); await page.waitForTimeout(500);
+    const w = await page.evaluate(() => window.__writes.length);
+    const still = !!(await page.$('[data-ai="refresh"]')) && /대기 중/.test(await page.textContent(".aicard"));
+    check("UI-33", "대기 글: 「지금 AI 제안 받기」를 눌러도 글이 저장되지 않고 대기 카드가 그대로다", w === 0 && still, "쓰기 " + w + "건, 카드 유지 " + still); }
   await ctx.close();
   const o = await open("#/post/fail");
   const t2 = await o.page.textContent(".aicard");
