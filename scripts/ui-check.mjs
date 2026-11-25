@@ -57,7 +57,7 @@ async function open(hash, { admin = true, deny = false, asEval = false, viewport
     const u = route.request().url();
     const m = u.match(/gstatic\.com\/firebasejs\/[^/]+\/(firebase-[a-z]+\.js)/);
     if (m) return route.fulfill({ status: 200, contentType: "text/javascript", headers: { "access-control-allow-origin": "*" }, body: STUBS[m[1]] });
-    if (asEval && u.startsWith("file://") && u.split("#")[0].endsWith("/index.html")) return route.fulfill({ status: 200, contentType: "text/html", body: fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace('const EVAL_UID="";', 'const EVAL_UID="EV1";') });
+    if (asEval && u.startsWith("file://") && u.split("#")[0].endsWith("/index.html")) return route.fulfill({ status: 200, contentType: "text/html", body: fs.readFileSync(path.join(ROOT, "index.html"), "utf8").replace(/const EVAL_UID="[^"]*";/, 'const EVAL_UID="EV1";') });
     if (u.startsWith("file://")) return route.continue();
     return route.abort();
   });
